@@ -8,37 +8,50 @@
  ============================================================================
  */
 
-#include "../../geo.cu"
+#include "../../geo.cuh"
 
 int main(int argc, char **argv)
 {
 
 	if(argc >= 2){
+		// --------------------------------------------
+		// ------------ handle input ------------------
+		// --------------------------------------------
 		time_t now = time(0);
 		string sessionID = string(ctime(&now));
+		Params prm;
+		prm.model_name = string(argv[1]);
+		prm.prm_filename = prm.model_name + ".prm";
+		prm.tet_filename = prm.model_name + ".tet";
+		prm.material_filename = prm.model_name + ".mat";
+		global_logFname = prm.model_name + ".log";
 		SAY_LOG("session " + sessionID + "\n");
-		// ------------ read params --------------
-		string params_filename = string(argv[1]);
-		// prm is global. It's not good, but I don't see why.
-		// So at least for now it's done this way in case that I don't know how to do better
-		if(CHECK(prm.load_from_file(params_filename), params_filename)) return 1;
-		if(argc > 2){
-			prm.msh_filename = string(argv[2]);
-		}
+		// -------------------------------------------
+		// ------------ read parameters --------------
+		// -------------------------------------------
+		if(CHECK(prm.load_from_file(prm.prm_filename), prm.prm_filename)) return 1;
 
+		// -----------------------------------------------
 		// ------------ create test surface --------------
+		// -----------------------------------------------
 		Surface srf;
-		if(CHECK(srf.load_from_file(prm.msh_filename), prm.msh_filename)) return 1;
+		if(CHECK(srf.load_from_file(prm.tet_filename, prm.material_filename), prm.tet_filename + " or " + prm.material_filename)) return 1;
 
+		// ---------------------------------------------
 		// ------------ create test rays ---------------
-		//Wavefront waves;
-		Ray ray(make_double3(0,0,0), normalize(make_double3(1,2,0)));
-		//waves.add(ray);
+		// ---------------------------------------------
+		Ray ray(make_double3(0,0,0), normalize(make_double3(1,0,2)) * (srf.materials[1].Cp), PRayType);
+		// Ray(const double3 _r, const double3 _v, const int _type = BaseRayType, const double _A = 1, const double _t = 0):
 
+		// ----------------------------------------------
 		// ------------- conduct test computation -------
-		ray.move(srf);
+		// ----------------------------------------------
+		//prm.print(cout);
+		//srf.print(cout);
+
+		ray.move(&srf, &prm);
 	} else {
-		cout << "Usage:\n./comp_geo      params_file      [msh_file]\n";
+		cout << "Usage:\n./comp_geo      model_name\n";
 	}
 
 	return 0;
