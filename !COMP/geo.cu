@@ -11,194 +11,6 @@
 
 #include "geo.cuh"
 
-// ----------------------------------------- main math ------------------------------------------
-
-int rightV(vector<double3>& v, double3 n, double3 v0)
-{
-	if(v.size() != 4){
-		CHECK(WRONG_SET_OF_POSSIBLE_REFLECTED_RAYS, 0);
-		exit(1);
-	}
-
-
-	int i,res = -1;
-	double cs, max_cs = -2, kv = 1/length(v0);
-
-	// reflected ray have the least angle with v0 |=> the beggest cos(v_new,v0)
-	for(i = 0; i < 4; ++i){
-		if(dot(v0, n)*dot(v[i], n) < 0){ // exclude other side of surface
-			cs = dot(v[i], v0)/length(v[i])*kv;
-			if(cs > max_cs){ // determine reflected ray
-				res = i;
-				max_cs = cs;
-			}
-		}
-	}
-
-	if(res == -1){
-		CHECK(NO_REFLECTED_RAY_FOUND, 0);
-		exit(1);
-	}
-	return res;
-}
-
-double3 newV(double3 n, double3 v_old, double3 vx, double3 vy)
-{
-	vector<double3> v_news;
-	v_news.clear();
-	// we don't know the direction of n and nr, so we have to check all 4 possible variants
-	// to choose the one that really is the physicaly reflected ray
-	v_news.push_back(vx + vy);
-	v_news.push_back(vx - vy);
-	v_news.push_back(-v_news[1]);
-	v_news.push_back(-v_news[0]);
-	return v_news[rightV(v_news, n, v_old)];
-}
-
-// ----------------------------------------- Other stuff ----------------------------------------------
-char bool2int(bool b){ return b ? 1 : 0; }
-
-template<typename T>
-//int stp(T str)
-void stp(T str)
-{
-	cerr << str << endl;
-	cin.get();
-	//int r;
-	//cin >> r;
-	//return r;
-}
-
-template<typename T>
-string vectorToStr(vector<T> v, string sp)
-{
-        string s="";
-        for(int i = 0; i < v.size()-1; ++i) s+= (toString(v[i])+sp);
-        return s+toString(v[v.size()-1]);
-}
-template<typename T>
-void printVector(ostream &output, vector<T> v, string sp1, string sp2, string sp3)
-{
-	int sz = v.size();
-    output << sp1;
-    for(int i = 0; i < sz-1; ++i) output << v[i] << sp2;
-    output << v[sz-1] << sp3;
-}
-template<typename T>
-T sumVector(vector<T> v)
-{
-        T s=0;
-        for(int i = 0; i < v.size(); ++i) s+=v[i];
-        return s;
-}
-template <typename T>
-string toString(T val)
-{
-    std::ostringstream oss;
-    oss << val;
-    return oss.str();
-}
-template<typename T>
-T fromString(const string& s)
-{
-  std::istringstream iss(s);
-  T res;
-  iss >> res;
-  return res;
-}
-
-string toLower(string s)
-{
-	char d = 'a'-'A';
-	for(int i = 0; i<s.size(); ++i) if((s[i]>='A') && (s[i]<='Z')) s[i]+=d;
-	return s;
-}
-string toUpper(string s)
-{
-	char d = 'A'-'a';
-	for(int i = 0; i<s.size(); ++i) if((s[i]>='a') && (s[i]<='z')) s[i]+=d;
-	return s;
-}
-void printD3(ostream &output, double3 r, string sp1, string sp2, string sp3)
-{
-	output << d3ToStr(r, sp1, sp2, sp3);
-}
-
-template<typename T>
-int CHECK(int n, T s)
-{
-    if(!n){ return 0; }
-    ofstream Fout(global_logFname.c_str(), ios::app);
-    if(!Fout){ return CANT_OPEN_FILE_FOR_WRITING; }
-
-    if(n != SAY_IT){
-    	string _s = "error #" + toString(n) + "\n   message:\n" + error_handl_string + "\n";
-    	Fout << "\n" << _s;
-    	cout << _s;
-    }
-    switch(n){
-    	case SAY_IT: Fout << s; break;
-
-    	case CANT_OPEN_FILE_FOR_READING: Fout << "Can't open file\n" << s << "\nfor reading"; break;
-    	case CANT_OPEN_FILE_FOR_WRITING: Fout << "Can't open file\n" << s << "\nfor writing"; break;
-
-    	case WRONG_SET_OF_POSSIBLE_REFLECTED_RAYS: Fout << "Wrong set of possible reflected rays (v.size != 4)\n"; break;
-    	case NO_REFLECTED_RAY_FOUND: Fout << "No reflected ray found\n"; break;
-    	case WRONG_RAY_TYPE: Fout << "Wrong ray type: " << s; break;
-
-        default: Fout << "Unknown error #" << n << "\nerror message:\n" << s;
-    }
-    if(n != SAY_IT){ Fout << "\n"; }
-    Fout.close();
-
-    return n;
-}
-
-template<typename T>
-void SAY_LOG(T s)
-{
-	CHECK(SAY_IT, s);
-}
-
-// ---------------------------------------- Other math -------------------------------------------------
-bool almostEq(double x, double y, double _eps)
-{
-	return y == 0 ? (abs(x) < _eps) : (abs(x/y - 1) < _eps);
-}
-
-string d3ToStr(double3 d, string sp1, string sp2, string sp3)
-{
-	return sp1 + toString(d.x) + sp2 + toString(d.y) + sp2 + toString(d.z) + sp3;
-}
-
-vector<double> d3ToV(double3 v){
-	double vp[3] = {v.x, v.y, v.z};
-	vector<double> vv;
-	vv.assign(vp, vp+3);
-	return vv;
-}
-
-double cos_sin(double x)
-{
-    return sqrtf(1-x*x);
-}
-
-double sqr(double x)
-{
-	return x*x;
-}
-
-int sgn(double x, double _eps)
-{
-    if(x >= _eps){
-    	return 1;
-    } else if(x <= -_eps){
-        return -1;
-    } else {
-        return 0;
-    }
-}
-
 // --------------------------------------------------------------------------------------------
 // ------------------------------------ Material ----------------------------------------------
 // --------------------------------------------------------------------------------------------
@@ -268,6 +80,8 @@ Triangle::Triangle(const double3 *vertex, const int i0, const int i1, const int 
 void Triangle::clear_params()
 {
 	this->mat[0] = this->mat[1] = NULL;
+	this->detector = NULL;
+	this->is_absorber = 0;
 	this->i_vrtx[0] = this->i_vrtx[1] = this->i_vrtx[2] = 0;
 	this->r[0] = this->r[1] = this->r[2] = this->n = make_double3(0,0,0);
 }
@@ -289,54 +103,145 @@ int Triangle::isInside(const double3 rx, const double _eps) const
     		              (sg0 == this->sg(cross(this->r[0] - rx, this->r[0] - this->r[2]), _eps)));
 }
 
-string Triangle::toStr(string spr1, string spr2)
+string Triangle::ToStr(string spr1, string spr2)
 {
 	return spr1 + "vertices coords are:\n" +
-		   d3ToStr(this->r[0]) + "\n" +
-		   d3ToStr(this->r[1]) + "\n" +
-		   d3ToStr(this->r[2]) + "\n" +
+		   toStr(this->r[0]) + "\n" +
+		   toStr(this->r[1]) + "\n" +
+		   toStr(this->r[2]) + "\n" +
 		   "i_vrtx = " + toString(this->i_vrtx[0]+1) + ";" + toString(this->i_vrtx[1]+1) + ";" + toString(this->i_vrtx[2]+1) + "\n" +
-		   "n = " + d3ToStr(this->n) + "\n" +
+		   "n = " + toStr(this->n) + "\n" +
 		   "mat0 : " + this->mat[0]->toStr() + "\n"
 		   "mat1 : " + this->mat[1]->toStr() + spr2;
 }
 
 void Triangle::print(ostream &output, string spr1, string spr2)
 {
-	output << this->toStr(spr1, spr2);
+	output << this->ToStr(spr1, spr2);
 }
 
 // --------------------------------------------------------------------------------------------
 // ------------------------------------ Ray ---------------------------------------------------
 // --------------------------------------------------------------------------------------------
 
-void Ray::move(Surface* srf, Params *prm)
+Ray::Ray(Ray *_r)
 {
-	this->print(cout);
+	this->type = _r->type;
+	this->c = _r->c;
+	this->A = _r->A;
+	this->t = _r->t;
+	this->r = _r->r;
+	this->v = _r->v;
+	this->polar = _r->polar;
+}
+Ray::Ray(const double3 _r, const double3 _v, const double3 _polar, const int _type, const double _A, const double _t):
+        type(_type), A(_A), t(_t)
+{
+	this->r = _r;
+    this->v = _v;
+    this->polar = _polar;
+    this->c = length(this->v);
+}
+
+RegisteredRay Ray::toRegRay(void)
+{
+	return RegisteredRay(this);
+}
+
+void Ray::add(Ray *ray2)
+{
+	this->v = (this->v*this->A + ray2->v*ray2->A) / (this->A + ray2->A);
+	this->A += ray2->A;
+	this->c = ray2->c;
+	this->type = ray2->type;
+	this->polar = ray2->polar;
+	// t & r were determined before
+}
+
+int Ray::move(Surface* srf, Params *prm)
+{
 	prm->n_alive_rays++;
 	prm->n_total_rays++;
 
-	if((this->t + length(this->r)/this->c > prm->Tmax) || (this->A < prm->Amin)){
+	if((this->t > prm->Tmax*(1 + prm->eps)) || (this->A < prm->Amin)){
 		prm->n_alive_rays--;
-		return;
+		return 0;
 	}
 
-	//int i;
+	int i;
 
 	// --------------------- pre-geom - find collision point -------------------------
 	double3 n, rx;
 	pair<double, int> coll_res = this->find_collision(srf, prm);
 	// pair<double, int> Ray::find_collision(Surface* srf, Params* prm)
-	double t0 = coll_res.first;
+	double dlt_t = coll_res.first;
 	int i_coll = coll_res.second;
 	Triangle *trng;
 
 	if(i_coll == -1){
 		prm->n_alive_rays--;
-		return;
+		return 0;
 	} else {
-		rx = this->r + this->v*t0; // collision point found
 		trng = &(srf->polygons[i_coll]); // collision surface found
+		double3 dlt_r = this->v*dlt_t;
+
+		if(prm->draw_mov){ // draw frames
+			double t_new = this->t + dlt_t;
+			i = int(this->t / prm->dt) + 1;
+			double frame_t = i * prm->dt;
+			int3 Xi;
+			int ind;
+			double3 r_curr;
+
+			// recreate positions of the ray between collisions
+			while((frame_t < t_new) && (i < prm->Nfrm)){
+				r_curr = this->r + dlt_r * ((frame_t - this->t) / dlt_t); // r when t = frame_t
+				// prevent rays from runnig out of the whole system in case of
+				// __________|_______|____________________|_____
+				//          t_i    t_new                 t_i+1
+				if(r_curr.x >= prm->Xmax.x) r_curr.x = prm->Xmax.x - prm->eps;
+				if(r_curr.y >= prm->Xmax.y) r_curr.y = prm->Xmax.y - prm->eps;
+				if(r_curr.z >= prm->Xmax.z) r_curr.z = prm->Xmax.z - prm->eps;
+				if(r_curr.x <= prm->Xmin.x) r_curr.x = prm->Xmin.x + prm->eps;
+				if(r_curr.y <= prm->Xmin.y) r_curr.y = prm->Xmin.y + prm->eps;
+				if(r_curr.z <= prm->Xmin.z) r_curr.z = prm->Xmin.z + prm->eps;
+
+				switch(prm->prnt_mode){
+				case RAW_DATA_MODE:
+					srf->frames[i].regRays.push_back(Ray(r_curr, this->v, this->polar, this->type, this->A, frame_t));
+					// Ray(const double3 _r, const double3 _v, const int _type = BaseRayType, const double _A = 1, const double _t = 0)
+					break;
+				case FRAMES_DATA_MODE:
+					Xi = get_Nslc(r_curr - prm->Xmin, prm->dX);
+					if((Xi.x >= prm->Nslc.x) || (Xi.y >= prm->Nslc.y) || (Xi.z >= prm->Nslc.z)){
+						error_handl_string = "r_curr = " + toStr(r_curr) + "; Xi = " + toStr(Xi) + "; Nslc = " + toStr(prm->Nslc) + "; t = " + toString(frame_t);
+						return ERROR_MSG;
+					}
+					ind = ind3D_to_ind(Xi, prm->Nslc);
+					if(ind >= srf->frames[i].regRays.size()){
+						error_handl_string = "ind = " + toString(ind) + "; rays.size = " + toString(srf->frames[i].regRays.size()) + "; Nslc = " + toStr(prm->Nslc);
+						return ERROR_MSG;
+					}
+					srf->frames[i].regRays[ind].add(this);
+					break;
+				}
+				frame_t += prm->dt;
+				++i;
+			}
+		}
+
+		this->t += dlt_t;
+		if(prm->use_det){
+			if(trng->detector != NULL){ // found triangle is a part of a detector
+				trng->detector->regRays.push_back(RegisteredRay(this));
+			}
+			if(trng->is_absorber){
+				prm->n_alive_rays--;
+				return 0;
+			}
+		}
+
+		rx = this->r + dlt_r; // collision point found
 		n = trng->n;
 	}
 
@@ -347,53 +252,76 @@ void Ray::move(Surface* srf, Params *prm)
 	double sin_phi = cos_sin(cos_phi);
 	double p = sin_phi / this->c;
 	//double p2 = p*p;
-	double sin_p, sin_s, cos_p, cos_s;
-	double kp, ks; // As = A*ks, Ap = A*kp
+	double sin_p, sin_s;
 
 	// snell's law
-	// TODO sin>1
+	// TODO sin > 1
 	Material *mat_from = trng->mat[ bool2int(trng->sg(trng->r[0] - this->r, 0) < 0) ];
 	sin_p = p * mat_from->Cp;
 	sin_s = p * mat_from->Cs;
 
-	// complex math
-	// TODO phys
-	switch(this->type){
-	case PRayType:
-		kp = ks = 0.5;
-		break;
-	case SRayType:
-		kp = ks = 0.5;
-		break;
-	default:
-		error_handl_string = "Wrong ray type: " + toString(this->type) + this->toStr();
-		CHECK(WRONG_RAY_TYPE, this->type);
-		exit(1);
-	}
-
 	// --------------------------------- post-geom - create new rays--------------------------------------
 	double3 nr = normalize(cross(n,this->v)); // reflection surface
-	double3 v_new;
+	double3 v_new, r_new;
+	double A_new, t_new = this->t + prm->eps;
+
+	double sh_abs = 0, sv_abs = 1;
+	if(this->type == SRayType){
+		sh_abs = dot(this->polar, nr);
+		sv_abs = cos_sin(sh_abs);
+	}
 
 	// ---- build new P-ray -------
+	A_new = this->A * sv_abs;
 	if(sin_p <= 1){
-		cos_p = cos_sin(sin_p);
+		double cos_p = cos_sin(sin_p);
 		v_new = newV(n, this->v, n*cos_p, cross(n, nr)*sin_p) * mat_from->Cp;
-		Ray p_ray(rx + v_new * prm->eps, v_new, PRayType, this->A*kp, this->t + t0);
-		p_ray.move(srf, prm);
+		if(is0(v_new)){
+			error_handl_string = "v_new for P ray wasn't found for ray " + this->ToStr();
+			return ERROR_MSG;
+		}
+
+		r_new = rx + v_new * prm->eps;
+
+		Ray p_ray(r_new, v_new, normalize(v_new), PRayType, A_new / sqrt(2), t_new);
+		if(p_ray.move(srf, prm))
+			return ERROR_MSG;
+
+	} else {
+		srf->absorbedP += A_new * A_new;
 	}
 	// Ray(const double3 _r, const double3 _v, const int _type = BaseRayType, const double _A = 1, const double _t = 0):
 	// newV(double3 n, double3 v, double3 vx, double3 vy)
 
-	// ---- build new S-ray -------
+	// ---- build new S-rays -------
+	A_new = this->A;
 	if(sin_s <= 1){
-		cos_s = cos_sin(sin_s);
+		double cos_s = cos_sin(sin_s);
 		v_new = newV(n, this->v, n*cos_s, cross(n, nr)*sin_s) * mat_from->Cs;
-		Ray s_ray(rx + v_new*prm->eps, v_new, SRayType, this->A*ks, this->t + t0);
-		s_ray.move(srf, prm);
+		if(is0(v_new)){
+			error_handl_string = "v_new for S ray wasn't found for ray " + this->ToStr();
+			return ERROR_MSG;
+		}
+
+		if(sin_p > 1) // r_new wasn't assigned before
+			r_new = rx + v_new * prm->eps;
+
+		if(this->type == PRayType){
+			Ray s_ray(r_new, v_new, normalize(cross(v_new, nr)), SRayType, A_new, t_new); // Asv_new = A
+			if(s_ray.move(srf, prm))
+				return ERROR_MSG;
+		} else { // this->type == SRayType
+			Ray s_ray(r_new, v_new, normalize((this->polar + nr * sh_abs*(sqrt(2) - 1)) / sqrt(2)), SRayType, A_new*sqrt(sh_abs*sh_abs + sv_abs*sv_abs/2), t_new); // Ash_new = A * |Psh| / |P|
+			if(s_ray.move(srf, prm))
+				return ERROR_MSG;
+
+		}
+	} else {
+		srf->absorbedS += A_new * A_new;
 	}
 
 	prm->n_alive_rays--;
+	return 0;
 }
 
 pair<double, int> Ray::find_collision(Surface* srf, Params* prm)
@@ -420,29 +348,29 @@ pair<double, int> Ray::find_collision(Surface* srf, Params* prm)
 	return make_pair(t_min, i_coll);
 }
 
-string Ray::toStr(const string spr)
+string Ray::ToStr(const string spr)
 {
 	return spr + (this->type == PRayType ? "P-type" : "S-type") +
 			"\nc = " + toString(this->c) + "; A = " + toString(this->A) + "; t = " + toString(this->t) +
-			"\nr = " + d3ToStr(this->r) +
-			"\nv = " + d3ToStr(this->v) + spr;
+			"\nr = " + toStr(this->r) +
+			"\nv = " + toStr(this->v) + spr;
 }
 
 void Ray::print(ostream &output, string spr)
 {
-	output << this->toStr(spr);
+	output << this->ToStr(spr);
 }
 
 // --------------------------------------------------------------------------------------------
 // ------------------------------------ Surface -----------------------------------------------
 // --------------------------------------------------------------------------------------------
 
-Surface::Surface(int _n_pol, int _n_mat)
+Surface::Surface(int _n_pol, int _n_mat, int _n_det)
 {
-	this->resize_clear(_n_pol, _n_mat);
+	this->resize_clear(_n_pol, _n_mat, _n_det);
 }
 
-void Surface::resize_clear(int _n_pol, int _n_mat)
+void Surface::resize_clear(int _n_pol, int _n_mat, int _n_det)
 {
 	if(_n_pol != this->Npol){
 		delete[] this->polygons;
@@ -454,6 +382,12 @@ void Surface::resize_clear(int _n_pol, int _n_mat)
 		this->materials = (_n_mat == 0 ? NULL : (new Material[_n_mat]));
 		this->Nmat = _n_mat;
 	}
+	if(_n_det != this->Ndet){
+		delete[] this->detectors;
+		this->detectors = (_n_det == 0 ? NULL : (new Detector[_n_det]));
+		this->Ndet = _n_det;
+	}
+	absorbedP = absorbedS = 0;
 }
 
 void Surface::print(ostream &output, string spr1, string spr2)
@@ -470,7 +404,7 @@ void Surface::print(ostream &output, string spr1, string spr2)
 	output << spr2;
 }
 
-int Surface::load_from_file(string surf_filename, string mat_filename)
+int Surface::load_from_file(string surf_filename, string mat_filename, Params *prm)
 {
 	ifstream input;
 	int i, i2, i3, i4, i5;
@@ -487,12 +421,13 @@ int Surface::load_from_file(string surf_filename, string mat_filename)
 	int _n_mat;
 	input >> _n_mat;
 	if(_n_mat < 2){
+		input.close();
 		error_handl_string = "Nmat = " + toString(_n_mat) + "; must be at least 2\n";
 		return LESS_2_MATERIALS;
 	}
-	this->resize_clear(this->Npol, _n_mat);
+	this->resize_clear(this->Npol, _n_mat, this->Ndet);
 	for(i = 0; i < this->Nmat; ++i){
-		input >> this->materials[i].Cs >> this->materials[i].Cp;
+		input >> this->materials[i].Cp >> this->materials[i].Cs;
 	}
 	input.close();
 
@@ -506,13 +441,55 @@ int Surface::load_from_file(string surf_filename, string mat_filename)
 		error_handl_string = "surface-file " + surf_filename + " is missing\n";
 		return CANT_OPEN_FILE_FOR_READING;
 	}
+
+	// --------------------------------------- read vertices -----------------------------------------------
 	double3 *vertex;
 	int Nvertex;
-	// --------------------------------------- read vertex -----------------------------------------------
+
 	input >> Nvertex;
 	vertex = new double3[Nvertex];
+	bool find_Xbounds = areEq(prm->Xmax, prm->Xmin);
+	if(find_Xbounds){
+		prm->Xmax = make_double3(-9999999999999.0, -9999999999999.0, -9999999999999.0);
+		prm->Xmin = make_double3(9999999999999.0, 9999999999999.0, 9999999999999.0);
+	}
+
 	for(i = 0; i < Nvertex; ++i){
 		input >> vertex[i].x >> vertex[i].y >> vertex[i].z;
+
+		if(find_Xbounds){ // find global borders
+			if(vertex[i].x > prm->Xmax.x) prm->Xmax.x = vertex[i].x;
+			if(vertex[i].x < prm->Xmin.x) prm->Xmin.x = vertex[i].x;
+			if(vertex[i].y > prm->Xmax.y) prm->Xmax.y = vertex[i].y;
+			if(vertex[i].y < prm->Xmin.y) prm->Xmin.y = vertex[i].y;
+			if(vertex[i].z > prm->Xmax.z) prm->Xmax.z = vertex[i].z;
+			if(vertex[i].z < prm->Xmin.z) prm->Xmin.z = vertex[i].z;
+		}
+	}
+
+	// now we know real Xmax & Xmin & dX
+	// so we can allocate memory for frames (and for the grid if necessary)
+	if(prm->dX.x == 0) prm->dX.x = prm->Xmax.x - prm->Xmin.x + 1; // bigger than max delta, so int(delta/dX) == 0 ,
+	if(prm->dX.y == 0) prm->dX.y = prm->Xmax.y - prm->Xmin.y + 1; // so Nslc = 1 in the end
+	if(prm->dX.z == 0) prm->dX.z = prm->Xmax.z - prm->Xmin.z + 1;
+	prm->Nslc = get_Nslc(prm->Xmax - prm->Xmin, prm->dX) + 1;
+
+	if(prm->draw_mov){
+		this->frames = new Frame[prm->Nfrm + 1];
+		if(prm->prnt_mode == FRAMES_DATA_MODE){
+			int Nnodes = (prm->Nslc.x+1) * (prm->Nslc.y+1) * (prm->Nslc.z+1);
+			int ind;
+			int3 Xi;
+
+			for(i = 0; i < prm->Nfrm; ++i){
+				this->frames[i].regRays.resize(Nnodes);
+				for(Xi.z = 0; Xi.z < prm->Nslc.z; ++Xi.z) for(Xi.y = 0; Xi.y < prm->Nslc.y; ++Xi.y) for(Xi.x = 0; Xi.x < prm->Nslc.x; ++Xi.x){
+					ind = ind3D_to_ind(Xi, prm->Nslc);
+					this->frames[i].regRays[ind].t = i * prm->dt;
+					this->frames[i].regRays[ind].r = (Xi + 0.5) * prm->dX + prm->Xmin;
+				}
+			}
+		}
 	}
 
 	// ------------------------------------- read tetrahedrons & triangles ---------------------------------------------
@@ -536,11 +513,27 @@ int Surface::load_from_file(string surf_filename, string mat_filename)
 		for(i2 = 0; i2 < 4; ++i2){ // read vertices of tetrahedron_i
 			input >> i_vertex[i2];
 			--i_vertex[i2]; // arrays from 0, in file-format from 1
+			if(i_vertex[i2] >= Nvertex){
+				error_handl_string = "index of the " + toString(i2) + "th vertex of the " + toString(i) + "th tetrahedron is " + toString(i_vertex[i2]) + "; Nvertex = " + toString(Nvertex) + "\n";
+				delete[] vertex;
+				read_polygons.clear();
+				input.close();
+				return ERROR_MSG;
+			 }
+			// TODO check for identical vertices in a single tetrahedron
 		}
 		input >> i_mat; // read material of tetrahedron_i
+		// materils are indexed from 0, but 0th material is for background, so we don't do --i_mat
+		if(i_mat >= this->Nmat){
+			error_handl_string = "index of material of the " + toString(i) + "th tetrahedron is " + toString(i_mat) + "; Nmat = " + toString(this->Nmat) + "\n";
+			delete[] vertex;
+			read_polygons.clear();
+			input.close();
+			return ERROR_MSG;
+		}
 
-		for(i2 = 0; i2 < 4; ++i2){           // for each tetrahedron sub-surface (tet_surf_ind[i2][:]) check overlaps
-			for(i3 = 0; i3 < read_polygons.size(); ++i3){       // with all existing ones
+		for(i2 = 0; i2 < 4; ++i2){                        // for each tetrahedron sub-surface (tet_surf_ind[i2][:]) check overlaps
+			for(i3 = 0; i3 < read_polygons.size(); ++i3){ // with all existing ones
 				n_overlap_vrtx = 0;
 				for(i4 = 0; i4 < 3; ++i4){
 					for(i5 = 0; i5 < 3; ++i5){
@@ -570,7 +563,7 @@ int Surface::load_from_file(string surf_filename, string mat_filename)
 				delete[] vertex;
 				read_polygons.clear();
 				input.close();
-				return TOO_MANY_OVERLAPED_VERTICES;
+				return ERROR_MSG;
 			}
 			if(i3 == read_polygons.size()){ // current (i2) triangle-sub-surf is new to the all existing ones
 				read_polygons.push_back(Triangle(vertex, i_vertex[ tet_surf_ind[i2][0] ],
@@ -611,48 +604,304 @@ int Surface::load_from_file(string surf_filename, string mat_filename)
 		}
 		if(read_polygons[i].mat[0]->isEq(read_polygons[i].mat[1])){
 			// read_polygons[i] is a formal border with no real meaning
-			// actually it can't happen here if everything before worked fine, but lets leave it this way for now
-			// TODO error polygon with no material
+			// actually it can't happen here if everything before worked fine.
 			read_polygons.erase(read_polygons.begin()+i);
+
+			error_handl_string = toString(i) + "th polygon has no material set\n";
+			delete[] vertex;
+			read_polygons.clear();
+			input.close();
+			return ERROR_MSG;
 		}
 	}
 
-	this->resize_clear(read_polygons.size(), this->Nmat);
-	for(i = 0; i < this->Npol; ++i){ // copy read materials
+	this->resize_clear(read_polygons.size(), this->Nmat, this->Ndet);
+	for(i = 0; i < this->Npol; ++i){ // copy read data
 		this->polygons[i] = read_polygons[i];
 	}
-
-	delete[] vertex;
 	read_polygons.clear();
+	delete[] vertex;
+
+	// --------------------------------------- read detectors -----------------------------------------------
+	if(prm->use_det){
+		int Ntrg, i_det, _n_det;
+		Triangle *trng;
+
+		input >> Ntrg >> _n_det;
+		this->resize_clear(this->Npol, this->Nmat, _n_det);
+		for(i = 0; i < Ntrg; ++i){
+			for(i2 = 0; i2 < 3; ++i2){
+				input >> i_vertex[i2];
+				--i_vertex[i2];
+				if(i_vertex[i2] >= Nvertex){
+					error_handl_string = "index of the " + toString(i2) + "th vertex of the " + toString(i) + "th tetrahedron is " + toString(i_vertex[i2]) + "; Nvertex = " + toString(Nvertex) + "\n";
+					input.close();
+					return ERROR_MSG;
+				 }
+			}
+			input >> i_det;
+			--i_det;
+			// --i is necessary because all arrays are indexed from 0 but all abjects in the file are indexed from 1
+			if(i_det >= this->Ndet){
+				error_handl_string = "index of the detector of the " + toString(i) + "th polygon is " + toString(i_det) + "; Ndet = " + toString(this->Ndet) + "\n";
+				input.close();
+				return ERROR_MSG;
+			}
+
+			trng = this->findPolygon(i_vertex);
+			if(trng == NULL){
+				error_handl_string = toString(i) + "-th polygon is missing in the final version of the surface\n";
+				input.close();
+				return ERROR_MSG;
+			} else {
+				if(i_det >= 0){
+					trng->detector = &(this->detectors[i_det]); // add i2-th polygon to the i_det-th detector
+				}
+				trng->is_absorber = 1; // just an absorbing polygon, not a detector
+			}
+		}
+	}
+
 	input.close();
+
+	return 0;
+}
+
+Triangle* Surface::findPolygon(int* i_vertex) // find triangle by its vertices
+{
+	int i, i2, i3;
+	int n_overlap_vrtx;
+
+	for(i = 0; i < this->Npol; ++i){     // for each polygon
+		n_overlap_vrtx = 0;
+		for(i2 = 0; i2 < 3; ++i2){          // i_vertex[i2]
+			for(i3 = 0; i3 < 3; ++i3){      // this->polygons[i].i_vrtx[i3]
+				if(i_vertex[i2] == this->polygons[i].i_vrtx[i3]){
+					++n_overlap_vrtx; // count overlapping vertices
+					//cout << i2 << " " << i << " " << i3 << "\n";
+				}
+			}
+		}
+		if(n_overlap_vrtx >= 3){  // i - found polygon index
+			if(n_overlap_vrtx > 3){
+				error_handl_string = "Polygon (" + toString(i_vertex[0]) + ";" + toString(i_vertex[0]) + ";" + toString(i_vertex[0]) + ") has too many overlaps with " + toString(i) + "th polygon";
+				CHECK(ERROR_MSG);
+				exit(1);
+			}
+			break;
+		}
+	}
+
+	// i == this->Npol means no existing polygon matches all 3 vertices
+	return i == this->Npol ? NULL :  &(this->polygons[i]);
+}
+
+int Surface::saveDetectorInfo(string filename, Params *prm)
+{
+	ofstream output;
+
+	output.open(filename);
+	if(!output){
+		output.close();
+		error_handl_string = "can not open output file " + filename + " for writing\n";
+		return CANT_OPEN_FILE_FOR_WRITING;
+	}
+
+	int i;
+	// prm->Nfrm = (int)(prm->Tmax*(1 + prm->eps) / prm->dt)+1;
+	output << this->Ndet << " " << prm->Nfrm << "\n";
+	for(i = 0; i < this->Ndet; ++i){
+		//output << i+1 << "\n";
+		this->detectors[i].saveInfo(output, prm);
+	}
+
+	output.close();
+	return 0;
+}
+
+int Surface::saveMovie(Params *prm)
+{
+	string path = "./" + prm->model_name + "/frames/";
+    int i;
+	ofstream output;
+	string filename;
+
+	time_t real_start_t;
+
+	double tot_rays = 0, rays_printed = 0;
+	for(i = 0; i < prm->Nfrm; ++i){
+		tot_rays += this->frames[i].regRays.size();
+	}
+
+	time(&real_start_t);
+	for(i = 0; i < prm->Nfrm; ++i){
+		filename = path + toString(i) + ".frm";
+		output.open(filename);
+		if(!output){
+			output.close();
+			error_handl_string = "can not open output file \n|" + filename + "|\nfor writing\n";
+			return CANT_OPEN_FILE_FOR_WRITING;
+		}
+
+		this->frames[i].saveToFile(output, prm);
+		rays_printed += this->frames[i].regRays.size();
+
+		output.close();
+
+		time_progress(real_start_t, time(0), rays_printed / tot_rays, "saving movie");
+	}
+
 	return 0;
 }
 
 // --------------------------------------------------------------------------------------------
-// ------------------------------------ Surface -----------------------------------------------
+// ------------------------------------ Frame -------------------------------------------------
 // --------------------------------------------------------------------------------------------
 
+int Frame::saveToFile(ostream &output, Params *prm)
+{
+	int i;
+
+	switch(prm->prnt_mode){ // TODO PRNT_MODE_ID
+	case RAW_DATA_MODE:
+	case FRAMES_DATA_MODE:
+		int real_N = 0;
+		for(i = 0; i < this->regRays.size(); ++i){
+			if(this->regRays[i].A > 0)
+				++real_N;
+		}
+
+		Ray *curr_ray;
+		output << real_N << "\n";
+		for(i = 0; i < this->regRays.size(); ++i){
+			curr_ray = &(this->regRays[i]);
+			if(curr_ray->A > 0){
+				output //<< i << " "
+				   	   << (curr_ray->type - BaseRayType) << " "
+				   	   << curr_ray->t << " "
+				   	   << curr_ray->A << " "
+				   	   << curr_ray->c << " "
+				   	   << toStr(curr_ray->r, "", " ", "") << " "
+				   	   << toStr(curr_ray->v, "", " ", "") << "\n";
+			}
+		}
+		break;
+	}
+
+	return 0;
+}
+
+// --------------------------------------------------------------------------------------------
+// ------------------------------------ Detector ----------------------------------------------
+// --------------------------------------------------------------------------------------------
+
+void Detector::saveInfo(ostream &output, Params *prm)
+{
+	int i;
+	switch(prm->prnt_mode){
+		case RAW_DATA_MODE:
+			// save raw data
+			for(i = 0; i < this->regRays.size(); ++i){
+				output << i << " " << this->regRays[i].t << " " << this->regRays[i].A << " " << this->regRays[i].c << " " << this->regRays[i].type-RayTimeIND << "\n";
+			}
+			break;
+		case FRAMES_DATA_MODE:
+			// save registered curve
+			double *regArr = new double[prm->Nfrm];
+
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+			for(i = 0; i < prm->Nfrm; ++i){
+				regArr[i] = this->regValue(prm->dt*i, prm);
+			}
+
+			for(i = 0; i < prm->Nfrm; ++i){
+				output << prm->dt*i << " " << regArr[i] << "\n";
+			}
+
+			delete[] regArr;
+	}
+}
+
+double Detector::regValue(double t0, Params *prm)
+{
+	int i;
+	double res = 0;
+
+	for(i = 0; i < this->regRays.size(); ++i){
+		// res += this->peakFnc((t0 - this->regRays[i].t) / prm->tau, prm->B, this->regRays[i].A);
+		res += this->peakFnc((t0 - this->regRays[i].t) / prm->tau, prm->B);
+	}
+
+	return res / prm->Nrays;
+}
+
+double Detector::peakFnc(double x, double B, double A)
+// y = A*cos(2pi*f*t)*cos^4(t/tau) =
+// = A*cos(B*x)*cos^4(x), x = (t-t0)/tau, B = f*tau
+{
+	x = std::abs(x);
+	if(x > pi_d2){
+		return 0;
+	} else {
+		double _b = float_part(B*x);
+		if((0.25 <= _b) && (_b <= 0.75)) // cos(B*x) < 0
+			return 0;
+		_b = cos(x);
+		_b = _b * _b; // cos^2
+		_b = A * cos(pi_m2 * B * x) * _b * _b;
+		return  _b;
+	}
+}
+
+// --------------------------------------------------------------------------------------------
+// ------------------------------------ Params ------------------------------------------------
+// --------------------------------------------------------------------------------------------
 
 int Params::load_from_file(string filename)
 {
 	ifstream input(filename);
 	if(!input){
 		input.close();
-		return CANT_OPEN_FILE_FOR_READING;
+		error_handl_string = "file " + filename + " is missing\n";
+		return ERROR_MSG;
 	}
 
 	string buf_s;
 	std::getline(input, buf_s); // read comment line
+	input >> this->Nrays >> this->Tmax >> this->dt >> this->Amin >> this->f >> this->tau >> this->eps
+	      >> this->use_det >> this->draw_mov >> this->prnt_mode
+	      >> this->Xmin.x >> this->Xmin.y >> this->Xmin.z
+	      >> this->Xmax.x >> this->Xmax.y >> this->Xmax.z
+	      >> this->dX.x >> this->dX.y >> this->dX.z;
+	this->prnt_mode += PRINT_MODE_ID;
 
-	double _eps;
-	input >> this->Nrays >> this->Tmax >> this->Amin >> _eps;
-	this->eps = _eps > 0 ? _eps : SYS_EPS;
 	input.close();
+
+	if(this->eps == 0) this->eps = SYS_EPS;
+	if(this->dt > 0){
+		this->Nfrm = (int)(this->Tmax*(1 + this->eps) / this->dt)+1;
+	} else {
+		this->Nfrm = 0;
+		if((this->prnt_mode == FRAMES_DATA_MODE) && this->use_det){
+			error_handl_string = "average-sum result for detectors is requested, but dt <= 0\n";
+			return ERROR_MSG;
+		}
+		if(draw_mov){
+			error_handl_string = "draw movie requested, but dt <= 0\n";
+			return ERROR_MSG;
+		}
+	}
+
+	this->B = this->f * this->tau;
+	this->f *= TIME_UNIT;   //  Gz * 10^6
+	this->tau /= TIME_UNIT; // sec * 10^-6
 
 	return 0;
 }
 
-void Params::print(ostream &output, string spr)
+void Params::print_full(ostream &output, string spr)
 {
 	for(int i = 0; i < this->paramFHead.size(); ++i){
 		output << this->paramFHead[i] << " | ";
@@ -665,15 +914,81 @@ void Params::print(ostream &output, string spr)
 		   << "alive_rays: " << this->n_alive_rays << "; total_rays: " << this->n_total_rays << spr;
 }
 
+void Params::print(ostream &output)
+{
+	int spForVal = 15;
+
+	for(int i = 0; i < this->paramFHead.size(); ++i){
+		output << setw(spForVal) << this->paramFHead[i];
+	}
+
+	output << "\n"
+		   << setw(spForVal) << this->Nrays << setw(spForVal) << this->Tmax << setw(spForVal) << this->dt
+		   << setw(spForVal) << this->Amin << setw(spForVal) << this->f/TIME_UNIT << setw(spForVal) << this->tau*TIME_UNIT
+		   << setw(spForVal) << this->eps << setw(spForVal) << this->use_det << setw(spForVal) << this->draw_mov
+		   << setw(spForVal) << (this->prnt_mode - PRINT_MODE_ID)
+		   << setw(spForVal) << this->Xmin.x << setw(spForVal) << this->Xmin.y << setw(spForVal) << this->Xmin.z
+		   << setw(spForVal) << this->Xmax.x << setw(spForVal) << this->Xmax.y << setw(spForVal) << this->Xmax.z
+		   << setw(spForVal) << this->dX.x << setw(spForVal) << this->dX.y << setw(spForVal) << this->dX.z;
+}
+
 int Params::save_to_file(string filename)
 {
 	ofstream output(filename);
 	if(!output){
+		error_handl_string = "can not open file                                    \n|" +
+				              filename +
+				              "|                                             \nfor writing                                           \n";
 		return CANT_OPEN_FILE_FOR_WRITING;
 	}
 
 	this->print(output);
 
 	output.close();
+	return 0;
+}
+
+// --------------------------------------------------------------------------------------------
+// ------------------------------------ Global Fncs -------------------------------------------
+// --------------------------------------------------------------------------------------------
+
+int compute(Surface *srf, Params *prm)
+{
+	Ray ray;
+	time_t real_start_t;
+	int i;
+
+	double3 *rays_v = new double3[prm->Nrays];
+	// generate rays
+	for(i = 0; i < prm->Nrays; ++i){
+		rays_v[i] = vecByAngles(myRnd(pi/4, 3*pi/4), 0) * srf->materials[1].Cp;
+	}
+	/*
+	for(i = 0; i < prm->Nrays/4; ++i){
+		// rays_v[4*i] = rndVec(srf->materials[1].Cp);
+		rays_v[4*i]   = vecByAngles(myRnd(-pi/4-0.1, pi/4+0.1), myRnd(-pi/4-0.1, pi/4+0.1)) * srf->materials[1].Cp;
+		rays_v[4*i+1] = vecByAngles(myRnd(pi/4-0.1, pi*3/4+0.1), myRnd(-pi/4-0.1, pi/4+0.1)) * srf->materials[1].Cp;
+		rays_v[4*i+2] = vecByAngles(myRnd(pi*3/4-0.1, pi*5/4+0.1), myRnd(-pi/4-0.1, pi/4+0.1)) * srf->materials[1].Cp;
+		rays_v[4*i+3] = vecByAngles(myRnd(pi*5/4-0.1, pi*7/4+0.1), myRnd(-pi/4-0.1, pi/4+0.1)) * srf->materials[1].Cp;
+		// vecByAngles(myRnd(-pi, pi), myRnd(-pi_d2, pi_d2))*V
+	}
+	*/
+
+	time(&real_start_t);
+	for(i = 0; i < prm->Nrays; ++i){
+		ray = Ray(make_double3(0,0,0), rays_v[i], normalize(rays_v[i]), PRayType, 1, 0);
+		// Ray(const double3 _r, const double3 _v, const double3 _polar, const int _type = PRayType, const double _A = 1, const double _t = 0)
+		srf->totalE0 += ray.A * ray.A;
+
+		if(ray.move(srf, prm)){
+			error_handl_string = toString(i) + "-th ray failed\n";
+			delete[] rays_v;
+			return ERROR_MSG;
+		}
+
+		time_progress(real_start_t, time(0), (i+1) / (float(prm->Nrays)), "computing");
+	}
+
+	delete[] rays_v;
 	return 0;
 }

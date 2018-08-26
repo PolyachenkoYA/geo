@@ -128,8 +128,9 @@ src/comp_geo.o : ../src/comp_geo.cu \
     /usr/local/cuda-9.2/bin/../targets/x86_64-linux/include/texture_indirect_functions.h \
     /usr/local/cuda-9.2/bin/../targets/x86_64-linux/include/surface_indirect_functions.h \
     /usr/local/cuda-9.2/bin/../targets/x86_64-linux/include/device_launch_parameters.h \
-    ./../../geo.cu \
-    ./../../geo.cuh \
+    ./../../general_math.cu \
+    ./../../general_math.cuh \
+    ./../../const.cuh \
     /usr/include/c++/5/iostream \
     /usr/include/c++/5/ostream \
     /usr/include/c++/5/ios \
@@ -867,4 +868,10 @@ src/comp_geo.o : ../src/comp_geo.cu \
     /usr/include/c++/5/bits/locale_facets_nonio.tcc \
     /usr/include/c++/5/bits/locale_conv.h \
     /usr/local/cuda-9.2/bin/../targets/x86_64-linux/include/cuda_profiler_api.h \
-    /usr/local/cuda-9.2/bin/../targets/x86_64-linux/include/math_helper.h
+    /usr/local/cuda-9.2/bin/../targets/x86_64-linux/include/math_helper.h \
+    ./../../spec_math.cu \
+    ./../../spec_math.cuh \
+    ./../../format.cu \
+    ./../../format.cuh \
+    ./../../geo.cu \
+    ./../../geo.cuh

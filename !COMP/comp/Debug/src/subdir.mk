@@ -17,8 +17,8 @@ CU_DEPS += \
 src/%.o: ../src/%.cu
 	@echo 'Building file: $<'
 	@echo 'Invoking: NVCC Compiler'
-	/usr/local/cuda-9.2/bin/nvcc -include ../../geo.cu -G -g -O0 -Xcompiler -fopenmp -std=c++11   -odir "src" -M -o "$(@:%.o=%.d)" "$<"
-	/usr/local/cuda-9.2/bin/nvcc -include ../../geo.cu -G -g -O0 -Xcompiler -fopenmp -std=c++11 --compile --relocatable-device-code=false  -x cu -o  "$@" "$<"
+	/usr/local/cuda-9.2/bin/nvcc -include ../../geo.cu -include ../../general_math.cu -include ../../spec_math.cu -include ../../format.cu -G -g -O0 -Xcompiler -fopenmp -std=c++11   -odir "src" -M -o "$(@:%.o=%.d)" "$<"
+	/usr/local/cuda-9.2/bin/nvcc -include ../../geo.cu -include ../../general_math.cu -include ../../spec_math.cu -include ../../format.cu -G -g -O0 -Xcompiler -fopenmp -std=c++11 --compile --relocatable-device-code=false  -x cu -o  "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

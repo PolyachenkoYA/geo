@@ -1,4 +1,4 @@
 #!/bin/bash
-#rm -rf ./test
+rm -rf ./cub
 #rm -f ./stop
-#rm -f ./*.log
+rm -f ./*.log

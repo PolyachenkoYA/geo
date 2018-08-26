@@ -1,0 +1,2 @@
+Nrays        Tmax   dt         Amin     f          tau      eps     use_det      draw_mov    prnt_mode      Xmin       Xmax      dX
+50000        0.56      0.002       0.01     0.002      5        0       1            1           1          0 0 0       0 0 0    0.5 0.5 0

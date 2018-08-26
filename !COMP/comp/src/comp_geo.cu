@@ -24,32 +24,39 @@ int main(int argc, char **argv)
 		prm.prm_filename = prm.model_name + ".prm";
 		prm.tet_filename = prm.model_name + ".tet";
 		prm.material_filename = prm.model_name + ".mat";
+		prm.res_filename = prm.model_name + ".res";
 		global_logFname = prm.model_name + ".log";
 		SAY_LOG("session " + sessionID + "\n");
 		// -------------------------------------------
 		// ------------ read parameters --------------
 		// -------------------------------------------
-		if(CHECK(prm.load_from_file(prm.prm_filename), prm.prm_filename)) return 1;
+		if(CHECK(prm.load_from_file(prm.prm_filename))) return 1;
 
 		// -----------------------------------------------
-		// ------------ create test surface --------------
+		// ---------------- read surface -----------------
 		// -----------------------------------------------
 		Surface srf;
-		if(CHECK(srf.load_from_file(prm.tet_filename, prm.material_filename), prm.tet_filename + " or " + prm.material_filename)) return 1;
+		if(CHECK(srf.load_from_file(prm.tet_filename, prm.material_filename, &prm))) return 1;
 
-		// ---------------------------------------------
-		// ------------ create test rays ---------------
-		// ---------------------------------------------
-		Ray ray(make_double3(0,0,0), normalize(make_double3(1,0,2)) * (srf.materials[1].Cp), PRayType);
-		// Ray(const double3 _r, const double3 _v, const int _type = BaseRayType, const double _A = 1, const double _t = 0):
+		// ----------------------------------------------------
+		// --------------- conduct computation ----------------
+		// ----------------------------------------------------
+		if(CHECK(compute(&srf, &prm))) return 1;
 
-		// ----------------------------------------------
-		// ------------- conduct test computation -------
-		// ----------------------------------------------
-		//prm.print(cout);
-		//srf.print(cout);
+		// --------------------------------------------
+		// ------------ save results ------------------
+		// --------------------------------------------
+		string path = "./" + prm.model_name + "/frames/";
+	    mkdir(prm.model_name.c_str(),S_IRWXU | S_IRWXG);
+	    mkdir(path.c_str(),S_IRWXU | S_IRWXG);
 
-		ray.move(&srf, &prm);
+		if(CHECK(prm.save_to_file("./" + prm.model_name + "/" + prm.prm_filename))) return 1;
+		if(prm.use_det){
+			if(CHECK(srf.saveDetectorInfo(prm.res_filename, &prm))) return 1;
+		}
+		if(prm.draw_mov){
+			if(CHECK(srf.saveMovie(&prm))) return 1;
+		}
 	} else {
 		cout << "Usage:\n./comp_geo      model_name\n";
 	}

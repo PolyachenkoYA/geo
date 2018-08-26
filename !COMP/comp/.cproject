@@ -29,9 +29,12 @@
 								<option id="nvcc.compiler.pic.677136897" name="Position Independent Code (-fPIC)" superClass="nvcc.compiler.pic"/>
 								<option id="nvcc.compiler.include.files.1675872289" name="Include files (-include)" superClass="nvcc.compiler.include.files" valueType="includeFiles">
 									<listOptionValue builtIn="false" value="../../geo.cu"/>
+									<listOptionValue builtIn="false" value="../../general_math.cu"/>
+									<listOptionValue builtIn="false" value="../../spec_math.cu"/>
+									<listOptionValue builtIn="false" value="../../format.cu"/>
 								</option>
 								<option id="nvcc.compiler.cpp11option.590254502" name="Enable C++11 support (-std=c++11)" superClass="nvcc.compiler.cpp11option" value="true" valueType="boolean"/>
-								<option id="nvcc.compiler.compileroptions.1148752938" superClass="nvcc.compiler.compileroptions" valueType="stringList">
+								<option id="nvcc.compiler.compileroptions.1148752938" name="Preprocessor options (-Xcompiler)" superClass="nvcc.compiler.compileroptions" valueType="stringList">
 									<listOptionValue builtIn="false" value="-fopenmp"/>
 								</option>
 								<inputType id="nvcc.compiler.input.cu.1243221009" superClass="nvcc.compiler.input.cu"/>
@@ -39,7 +42,7 @@
 								<inputType id="nvcc.compiler.input.c.707473532" superClass="nvcc.compiler.input.c"/>
 							</tool>
 							<tool id="nvcc.linker.base.1363681400" name="NVCC Linker" superClass="nvcc.linker.base">
-								<option id="nvcc.linker.option.libs.1957645882" superClass="nvcc.linker.option.libs" valueType="libs">
+								<option id="nvcc.linker.option.libs.1957645882" name="Libraries (-l)" superClass="nvcc.linker.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="gomp"/>
 								</option>
 								<inputType id="nvcc.linker.input.1572115260" superClass="nvcc.linker.input">
@@ -55,7 +58,9 @@
 					</folderInfo>
 				</configuration>
 			</storageModule>
-			<storageModule moduleId="com.nvidia.cuda.ide.build.project.ICudaProjectConfiguration"/>
+			<storageModule moduleId="com.nvidia.cuda.ide.build.project.ICudaProjectConfiguration">
+				<editor-arch major="3" minor="0"/>
+			</storageModule>
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 		</cconfiguration>
 		<cconfiguration id="com.nvidia.cuda.ide.nine_zero.configuration.release.1569452522">
@@ -84,11 +89,14 @@
 								<option id="nvcc.compiler.option.level.1410849898" name="Generate host debug information (-g)" superClass="nvcc.compiler.option.level"/>
 								<option defaultValue="nvcc.compiler.optimization.level.most" id="nvcc.compiler.optimization.level.99482143" name="Optimization Level" superClass="nvcc.compiler.optimization.level" valueType="enumerated"/>
 								<option id="nvcc.compiler.pic.861451013" name="Position Independent Code (-fPIC)" superClass="nvcc.compiler.pic"/>
-								<option id="nvcc.compiler.compileroptions.2110182595" superClass="nvcc.compiler.compileroptions" valueType="stringList">
+								<option id="nvcc.compiler.compileroptions.2110182595" name="Preprocessor options (-Xcompiler)" superClass="nvcc.compiler.compileroptions" valueType="stringList">
 									<listOptionValue builtIn="false" value="-fopenmp"/>
 								</option>
-								<option id="nvcc.compiler.cpp11option.993133129" superClass="nvcc.compiler.cpp11option" value="true" valueType="boolean"/>
-								<option id="nvcc.compiler.include.files.1393687993" superClass="nvcc.compiler.include.files" valueType="includeFiles">
+								<option id="nvcc.compiler.cpp11option.993133129" name="Enable C++11 support (-std=c++11)" superClass="nvcc.compiler.cpp11option" value="true" valueType="boolean"/>
+								<option id="nvcc.compiler.include.files.1393687993" name="Include files (-include)" superClass="nvcc.compiler.include.files" valueType="includeFiles">
+									<listOptionValue builtIn="false" value="../../general_math.cu"/>
+									<listOptionValue builtIn="false" value="../../spec_math.cu"/>
+									<listOptionValue builtIn="false" value="../../format.cu"/>
 									<listOptionValue builtIn="false" value="../../geo.cu"/>
 								</option>
 								<inputType id="nvcc.compiler.input.cu.1658511499" superClass="nvcc.compiler.input.cu"/>
@@ -96,7 +104,7 @@
 								<inputType id="nvcc.compiler.input.c.867728559" superClass="nvcc.compiler.input.c"/>
 							</tool>
 							<tool id="nvcc.linker.base.1098606252" name="NVCC Linker" superClass="nvcc.linker.base">
-								<option id="nvcc.linker.option.libs.1318100199" superClass="nvcc.linker.option.libs" valueType="libs">
+								<option id="nvcc.linker.option.libs.1318100199" name="Libraries (-l)" superClass="nvcc.linker.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="gomp"/>
 								</option>
 								<inputType id="nvcc.linker.input.1310048939" superClass="nvcc.linker.input">
@@ -113,6 +121,9 @@
 				</configuration>
 			</storageModule>
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
+			<storageModule moduleId="com.nvidia.cuda.ide.build.project.ICudaProjectConfiguration">
+				<editor-arch major="3" minor="0"/>
+			</storageModule>
 		</cconfiguration>
 	</storageModule>
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
