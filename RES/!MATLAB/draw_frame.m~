@@ -2,12 +2,12 @@ function Amax = draw_frame(frame, ax, Amax, kA, tit, ax_bounds, colors)
     if(frame.Nrays == 0)        
         cla(ax);        
     else                
-        auto_norm = qop(isempty(Amax), 1, 0); % this must be a scalar double because of matlab.
-%         if(~auto_norm)
-%             Amax = max(max(frame.A), Amax);
-%         end
+        auto_norm = qop(isempty(Amax), 1, 0); % this 
+        if(~auto_norm)
+            Amax = max(max(frame.A), Amax);
+        end
         
-        draw_ind = (frame.type == 1);
+        draw_ind = frame.type == 1;
         if(auto_norm)
             scale_k = 1;
         else
@@ -32,8 +32,7 @@ function Amax = draw_frame(frame, ax, Amax, kA, tit, ax_bounds, colors)
         
         axis(ax_bounds);
         legend('P wave','S wave');
-        %view(0, 90);
-        view(60, 25); % 3D view
+        view(0, 90);        
     end
     
     title(tit);

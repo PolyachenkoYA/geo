@@ -131,17 +131,7 @@ src/comp_geo.o : ../src/comp_geo.cu \
     ./../../general_math.cu \
     ./../../general_math.cuh \
     ./../../const.cuh \
-    /usr/include/c++/5/iostream \
-    /usr/include/c++/5/ostream \
-    /usr/include/c++/5/ios \
-    /usr/include/c++/5/iosfwd \
-    /usr/include/c++/5/bits/stringfwd.h \
-    /usr/include/c++/5/bits/memoryfwd.h \
-    /usr/include/c++/5/bits/postypes.h \
-    /usr/include/c++/5/cwchar \
-    /usr/include/x86_64-linux-gnu/bits/wchar.h \
-    /usr/include/x86_64-linux-gnu/bits/wchar2.h \
-    /usr/include/c++/5/bits/char_traits.h \
+    /usr/include/c++/5/vector \
     /usr/include/c++/5/bits/stl_algobase.h \
     /usr/include/c++/5/bits/functexcept.h \
     /usr/include/c++/5/ext/numeric_traits.h \
@@ -155,80 +145,20 @@ src/comp_geo.o : ../src/comp_geo.cu \
     /usr/include/c++/5/bits/stl_iterator.h \
     /usr/include/c++/5/bits/ptr_traits.h \
     /usr/include/c++/5/bits/predefined_ops.h \
-    /usr/include/c++/5/cstdint \
-    /usr/lib/gcc/x86_64-linux-gnu/5/include/stdint.h \
-    /usr/include/stdint.h \
-    /usr/include/c++/5/bits/localefwd.h \
-    /usr/include/x86_64-linux-gnu/c++/5/bits/c++locale.h \
-    /usr/include/c++/5/clocale \
-    /usr/include/locale.h \
-    /usr/include/x86_64-linux-gnu/bits/locale.h \
-    /usr/include/c++/5/cctype \
-    /usr/include/ctype.h \
-    /usr/include/c++/5/bits/ios_base.h \
-    /usr/include/c++/5/ext/atomicity.h \
-    /usr/include/x86_64-linux-gnu/c++/5/bits/gthr.h \
-    /usr/include/x86_64-linux-gnu/c++/5/bits/gthr-default.h \
-    /usr/include/pthread.h \
-    /usr/include/sched.h \
-    /usr/include/x86_64-linux-gnu/bits/sched.h \
-    /usr/include/x86_64-linux-gnu/bits/setjmp.h \
-    /usr/include/x86_64-linux-gnu/c++/5/bits/atomic_word.h \
-    /usr/include/c++/5/bits/locale_classes.h \
-    /usr/include/c++/5/string \
     /usr/include/c++/5/bits/allocator.h \
     /usr/include/x86_64-linux-gnu/c++/5/bits/c++allocator.h \
     /usr/include/c++/5/ext/new_allocator.h \
-    /usr/include/c++/5/bits/ostream_insert.h \
-    /usr/include/c++/5/bits/cxxabi_forced.h \
-    /usr/include/c++/5/bits/stl_function.h \
-    /usr/include/c++/5/backward/binders.h \
-    /usr/include/c++/5/bits/range_access.h \
-    /usr/include/c++/5/initializer_list \
-    /usr/include/c++/5/bits/basic_string.h \
+    /usr/include/c++/5/bits/memoryfwd.h \
+    /usr/include/c++/5/bits/stl_construct.h \
     /usr/include/c++/5/ext/alloc_traits.h \
     /usr/include/c++/5/bits/alloc_traits.h \
-    /usr/include/c++/5/ext/string_conversions.h \
-    /usr/include/c++/5/cstdio \
-    /usr/include/c++/5/cerrno \
-    /usr/include/errno.h \
-    /usr/include/x86_64-linux-gnu/bits/errno.h \
-    /usr/include/linux/errno.h \
-    /usr/include/x86_64-linux-gnu/asm/errno.h \
-    /usr/include/asm-generic/errno.h \
-    /usr/include/asm-generic/errno-base.h \
-    /usr/include/c++/5/bits/functional_hash.h \
-    /usr/include/c++/5/bits/hash_bytes.h \
-    /usr/include/c++/5/bits/basic_string.tcc \
-    /usr/include/c++/5/bits/locale_classes.tcc \
-    /usr/include/c++/5/system_error \
-    /usr/include/x86_64-linux-gnu/c++/5/bits/error_constants.h \
-    /usr/include/c++/5/stdexcept \
-    /usr/include/c++/5/streambuf \
-    /usr/include/c++/5/bits/streambuf.tcc \
-    /usr/include/c++/5/bits/basic_ios.h \
-    /usr/include/c++/5/bits/locale_facets.h \
-    /usr/include/c++/5/cwctype \
-    /usr/include/wctype.h \
-    /usr/include/x86_64-linux-gnu/c++/5/bits/ctype_base.h \
-    /usr/include/c++/5/bits/streambuf_iterator.h \
-    /usr/include/x86_64-linux-gnu/c++/5/bits/ctype_inline.h \
-    /usr/include/c++/5/bits/locale_facets.tcc \
-    /usr/include/c++/5/bits/basic_ios.tcc \
-    /usr/include/c++/5/bits/ostream.tcc \
-    /usr/include/c++/5/istream \
-    /usr/include/c++/5/bits/istream.tcc \
-    /usr/include/c++/5/ctime \
-    /usr/include/c++/5/fstream \
-    /usr/include/c++/5/bits/codecvt.h \
-    /usr/include/x86_64-linux-gnu/c++/5/bits/basic_file.h \
-    /usr/include/x86_64-linux-gnu/c++/5/bits/c++io.h \
-    /usr/include/c++/5/bits/fstream.tcc \
-    /usr/include/c++/5/vector \
-    /usr/include/c++/5/bits/stl_construct.h \
     /usr/include/c++/5/bits/stl_uninitialized.h \
     /usr/include/c++/5/bits/stl_vector.h \
+    /usr/include/c++/5/initializer_list \
     /usr/include/c++/5/bits/stl_bvector.h \
+    /usr/include/c++/5/bits/functional_hash.h \
+    /usr/include/c++/5/bits/hash_bytes.h \
+    /usr/include/c++/5/bits/range_access.h \
     /usr/include/c++/5/bits/vector.tcc \
     /usr/local/cuda-9.2/bin/../targets/x86_64-linux/include/thrust/host_vector.h \
     /usr/local/cuda-9.2/bin/../targets/x86_64-linux/include/thrust/detail/config.h \
@@ -236,6 +166,9 @@ src/comp_geo.o : ../src/comp_geo.cu \
     /usr/local/cuda-9.2/bin/../targets/x86_64-linux/include/thrust/detail/config/simple_defines.h \
     /usr/local/cuda-9.2/bin/../targets/x86_64-linux/include/thrust/detail/config/compiler.h \
     /usr/local/cuda-9.2/bin/../targets/x86_64-linux/include/cuda.h \
+    /usr/lib/gcc/x86_64-linux-gnu/5/include/stdint.h \
+    /usr/include/stdint.h \
+    /usr/include/x86_64-linux-gnu/bits/wchar.h \
     /usr/local/cuda-9.2/bin/../targets/x86_64-linux/include/thrust/detail/config/host_system.h \
     /usr/local/cuda-9.2/bin/../targets/x86_64-linux/include/thrust/detail/config/device_system.h \
     /usr/local/cuda-9.2/bin/../targets/x86_64-linux/include/thrust/detail/config/host_device.h \
@@ -248,13 +181,52 @@ src/comp_geo.o : ../src/comp_geo.cu \
     /usr/include/c++/5/bits/stl_tempbuf.h \
     /usr/include/c++/5/bits/stl_raw_storage_iter.h \
     /usr/include/c++/5/typeinfo \
+    /usr/include/c++/5/iosfwd \
+    /usr/include/c++/5/bits/stringfwd.h \
+    /usr/include/c++/5/bits/postypes.h \
+    /usr/include/c++/5/cwchar \
+    /usr/include/x86_64-linux-gnu/bits/wchar2.h \
+    /usr/include/c++/5/ext/atomicity.h \
+    /usr/include/x86_64-linux-gnu/c++/5/bits/gthr.h \
+    /usr/include/x86_64-linux-gnu/c++/5/bits/gthr-default.h \
+    /usr/include/pthread.h \
+    /usr/include/sched.h \
+    /usr/include/x86_64-linux-gnu/bits/sched.h \
+    /usr/include/x86_64-linux-gnu/bits/setjmp.h \
+    /usr/include/x86_64-linux-gnu/c++/5/bits/atomic_word.h \
     /usr/include/c++/5/ext/concurrence.h \
+    /usr/include/c++/5/bits/stl_function.h \
+    /usr/include/c++/5/backward/binders.h \
     /usr/include/c++/5/bits/uses_allocator.h \
     /usr/include/c++/5/functional \
     /usr/include/c++/5/tuple \
     /usr/include/c++/5/utility \
     /usr/include/c++/5/bits/stl_relops.h \
     /usr/include/c++/5/array \
+    /usr/include/c++/5/stdexcept \
+    /usr/include/c++/5/string \
+    /usr/include/c++/5/bits/char_traits.h \
+    /usr/include/c++/5/cstdint \
+    /usr/include/c++/5/bits/localefwd.h \
+    /usr/include/x86_64-linux-gnu/c++/5/bits/c++locale.h \
+    /usr/include/c++/5/clocale \
+    /usr/include/locale.h \
+    /usr/include/x86_64-linux-gnu/bits/locale.h \
+    /usr/include/c++/5/cctype \
+    /usr/include/ctype.h \
+    /usr/include/c++/5/bits/ostream_insert.h \
+    /usr/include/c++/5/bits/cxxabi_forced.h \
+    /usr/include/c++/5/bits/basic_string.h \
+    /usr/include/c++/5/ext/string_conversions.h \
+    /usr/include/c++/5/cstdio \
+    /usr/include/c++/5/cerrno \
+    /usr/include/errno.h \
+    /usr/include/x86_64-linux-gnu/bits/errno.h \
+    /usr/include/linux/errno.h \
+    /usr/include/x86_64-linux-gnu/asm/errno.h \
+    /usr/include/asm-generic/errno.h \
+    /usr/include/asm-generic/errno-base.h \
+    /usr/include/c++/5/bits/basic_string.tcc \
     /usr/include/c++/5/bits/unique_ptr.h \
     /usr/include/c++/5/bits/shared_ptr.h \
     /usr/include/c++/5/bits/shared_ptr_base.h \
@@ -282,6 +254,27 @@ src/comp_geo.o : ../src/comp_geo.cu \
     /usr/local/cuda-9.2/bin/../targets/x86_64-linux/include/thrust/iterator/detail/iterator_category_with_system_and_traversal.h \
     /usr/local/cuda-9.2/bin/../targets/x86_64-linux/include/thrust/iterator/detail/iterator_traversal_tags.h \
     /usr/include/c++/5/iterator \
+    /usr/include/c++/5/ostream \
+    /usr/include/c++/5/ios \
+    /usr/include/c++/5/bits/ios_base.h \
+    /usr/include/c++/5/bits/locale_classes.h \
+    /usr/include/c++/5/bits/locale_classes.tcc \
+    /usr/include/c++/5/system_error \
+    /usr/include/x86_64-linux-gnu/c++/5/bits/error_constants.h \
+    /usr/include/c++/5/streambuf \
+    /usr/include/c++/5/bits/streambuf.tcc \
+    /usr/include/c++/5/bits/basic_ios.h \
+    /usr/include/c++/5/bits/locale_facets.h \
+    /usr/include/c++/5/cwctype \
+    /usr/include/wctype.h \
+    /usr/include/x86_64-linux-gnu/c++/5/bits/ctype_base.h \
+    /usr/include/c++/5/bits/streambuf_iterator.h \
+    /usr/include/x86_64-linux-gnu/c++/5/bits/ctype_inline.h \
+    /usr/include/c++/5/bits/locale_facets.tcc \
+    /usr/include/c++/5/bits/basic_ios.tcc \
+    /usr/include/c++/5/bits/ostream.tcc \
+    /usr/include/c++/5/istream \
+    /usr/include/c++/5/bits/istream.tcc \
     /usr/include/c++/5/bits/stream_iterator.h \
     /usr/local/cuda-9.2/bin/../targets/x86_64-linux/include/thrust/iterator/detail/universal_categories.h \
     /usr/local/cuda-9.2/bin/../targets/x86_64-linux/include/thrust/iterator/detail/is_iterator_category.h \
@@ -368,6 +361,7 @@ src/comp_geo.o : ../src/comp_geo.cu \
     /usr/local/cuda-9.2/bin/../targets/x86_64-linux/include/thrust/system_error.h \
     /usr/local/cuda-9.2/bin/../targets/x86_64-linux/include/thrust/system/error_code.h \
     /usr/local/cuda-9.2/bin/../targets/x86_64-linux/include/thrust/system/detail/errno.h \
+    /usr/include/c++/5/iostream \
     /usr/local/cuda-9.2/bin/../targets/x86_64-linux/include/thrust/system/detail/error_category.inl \
     /usr/include/c++/5/cstring \
     /usr/local/cuda-9.2/bin/../targets/x86_64-linux/include/thrust/system/detail/error_code.inl \
@@ -784,17 +778,7 @@ src/comp_geo.o : ../src/comp_geo.cu \
     /usr/local/cuda-9.2/bin/../targets/x86_64-linux/include/thrust/system/detail/adl/equal.h \
     /usr/local/cuda-9.2/bin/../targets/x86_64-linux/include/thrust/system/detail/sequential/equal.h \
     /usr/local/cuda-9.2/bin/../targets/x86_64-linux/include/thrust/detail/host_vector.inl \
-    /usr/include/x86_64-linux-gnu/sys/stat.h \
-    /usr/include/x86_64-linux-gnu/bits/stat.h \
     /usr/lib/gcc/x86_64-linux-gnu/5/include/omp.h \
-    /usr/include/c++/5/sstream \
-    /usr/include/c++/5/bits/sstream.tcc \
-    /usr/include/unistd.h \
-    /usr/include/x86_64-linux-gnu/bits/posix_opt.h \
-    /usr/include/x86_64-linux-gnu/bits/environments.h \
-    /usr/include/x86_64-linux-gnu/bits/confname.h \
-    /usr/include/getopt.h \
-    /usr/include/x86_64-linux-gnu/bits/unistd.h \
     /usr/include/c++/5/algorithm \
     /usr/include/c++/5/bits/stl_algo.h \
     /usr/include/c++/5/bits/algorithmfwd.h \
@@ -859,6 +843,22 @@ src/comp_geo.o : ../src/comp_geo.cu \
     /usr/include/c++/5/bits/random.tcc \
     /usr/include/c++/5/numeric \
     /usr/include/c++/5/bits/stl_numeric.h \
+    /usr/include/c++/5/ctime \
+    /usr/include/c++/5/fstream \
+    /usr/include/c++/5/bits/codecvt.h \
+    /usr/include/x86_64-linux-gnu/c++/5/bits/basic_file.h \
+    /usr/include/x86_64-linux-gnu/c++/5/bits/c++io.h \
+    /usr/include/c++/5/bits/fstream.tcc \
+    /usr/include/x86_64-linux-gnu/sys/stat.h \
+    /usr/include/x86_64-linux-gnu/bits/stat.h \
+    /usr/include/c++/5/sstream \
+    /usr/include/c++/5/bits/sstream.tcc \
+    /usr/include/unistd.h \
+    /usr/include/x86_64-linux-gnu/bits/posix_opt.h \
+    /usr/include/x86_64-linux-gnu/bits/environments.h \
+    /usr/include/x86_64-linux-gnu/bits/confname.h \
+    /usr/include/getopt.h \
+    /usr/include/x86_64-linux-gnu/bits/unistd.h \
     /usr/include/c++/5/iomanip \
     /usr/include/c++/5/locale \
     /usr/include/c++/5/bits/locale_facets_nonio.h \

@@ -17,7 +17,7 @@
 
 bool Material::isEq(const Material* m2, const double _eps) const
 {
-	return m2 == NULL ? 0 : (almostEq(this->Cp, m2->Cp, _eps) && almostEq(this->Cs, m2->Cs, _eps));
+	return m2 ? (almostEq(this->Cp, m2->Cp, _eps) && almostEq(this->Cs, m2->Cs, _eps)) : 0;
 }
 
 string Material::toStr(string spr1, string spr2)
@@ -79,8 +79,8 @@ Triangle::Triangle(const double3 *vertex, const int i0, const int i1, const int 
 
 void Triangle::clear_params()
 {
-	this->mat[0] = this->mat[1] = NULL;
-	this->detector = NULL;
+	this->mat[0] = this->mat[1] = nullptr;
+	this->detector = nullptr;
 	this->is_absorber = 0;
 	this->i_vrtx[0] = this->i_vrtx[1] = this->i_vrtx[2] = 0;
 	this->r[0] = this->r[1] = this->r[2] = this->n = make_double3(0,0,0);
@@ -111,8 +111,10 @@ string Triangle::ToStr(string spr1, string spr2)
 		   toStr(this->r[2]) + "\n" +
 		   "i_vrtx = " + toString(this->i_vrtx[0]+1) + ";" + toString(this->i_vrtx[1]+1) + ";" + toString(this->i_vrtx[2]+1) + "\n" +
 		   "n = " + toStr(this->n) + "\n" +
-		   "mat0 : " + this->mat[0]->toStr() + "\n"
-		   "mat1 : " + this->mat[1]->toStr() + spr2;
+		   "mat0 : " + this->mat[0]->toStr() + "\n" +
+		   "mat1 : " + this->mat[1]->toStr() +  "\n" +
+		   "absorber: " + (this->is_absorber ? "yes" : "no") + "\n" +
+		   "detector: " + (this->detector ? "yes" : "no") + spr2;
 }
 
 void Triangle::print(ostream &output, string spr1, string spr2)
@@ -133,9 +135,10 @@ Ray::Ray(Ray *_r)
 	this->r = _r->r;
 	this->v = _r->v;
 	this->polar = _r->polar;
+	this->next = _r->next;
 }
-Ray::Ray(const double3 _r, const double3 _v, const double3 _polar, const int _type, const double _A, const double _t):
-        type(_type), A(_A), t(_t)
+Ray::Ray(const double3 _r, const double3 _v, const double3 _polar, const int _type, const double _A, const double _t, Ray *_next):
+        type(_type), A(_A), t(_t), next(_next)
 {
 	this->r = _r;
     this->v = _v;
@@ -158,13 +161,10 @@ void Ray::add(Ray *ray2)
 	// t & r were determined before
 }
 
-int Ray::move(Surface* srf, Params *prm)
+int Ray::move(Surface* srf, Params *prm, RaysFront *rays)
 {
-	prm->n_alive_rays++;
-	prm->n_total_rays++;
-
 	if((this->t > prm->Tmax*(1 + prm->eps)) || (this->A < prm->Amin)){
-		prm->n_alive_rays--;
+		rays->quit_ray();
 		return 0;
 	}
 
@@ -178,8 +178,8 @@ int Ray::move(Surface* srf, Params *prm)
 	int i_coll = coll_res.second;
 	Triangle *trng;
 
-	if(i_coll == -1){
-		prm->n_alive_rays--;
+	if(i_coll == -1){ // no collision found, so the ray just runs away from the surface
+		rays->quit_ray();
 		return 0;
 	} else {
 		trng = &(srf->polygons[i_coll]); // collision surface found
@@ -232,11 +232,11 @@ int Ray::move(Surface* srf, Params *prm)
 
 		this->t += dlt_t;
 		if(prm->use_det){
-			if(trng->detector != NULL){ // found triangle is a part of a detector
+			if(trng->detector){ // found triangle is a part of a detector
 				trng->detector->regRays.push_back(RegisteredRay(this));
-			}
+			} // TODO frames - building registered curve on the fly
 			if(trng->is_absorber){
-				prm->n_alive_rays--;
+				rays->quit_ray();
 				return 0;
 			}
 		}
@@ -283,12 +283,9 @@ int Ray::move(Surface* srf, Params *prm)
 
 		r_new = rx + v_new * prm->eps;
 
-		Ray p_ray(r_new, v_new, normalize(v_new), PRayType, A_new / sqrt(2), t_new);
-		if(p_ray.move(srf, prm))
-			return ERROR_MSG;
-
+		rays->add_ray(new Ray(r_new, v_new, normalize(v_new), PRayType, A_new / sqrt(2), t_new));
 	} else {
-		srf->absorbedP += A_new * A_new;
+		rays->lostP += A_new * A_new;
 	}
 	// Ray(const double3 _r, const double3 _v, const int _type = BaseRayType, const double _A = 1, const double _t = 0):
 	// newV(double3 n, double3 v, double3 vx, double3 vy)
@@ -306,21 +303,18 @@ int Ray::move(Surface* srf, Params *prm)
 		if(sin_p > 1) // r_new wasn't assigned before
 			r_new = rx + v_new * prm->eps;
 
-		if(this->type == PRayType){
-			Ray s_ray(r_new, v_new, normalize(cross(v_new, nr)), SRayType, A_new, t_new); // Asv_new = A
-			if(s_ray.move(srf, prm))
-				return ERROR_MSG;
-		} else { // this->type == SRayType
-			Ray s_ray(r_new, v_new, normalize((this->polar + nr * sh_abs*(sqrt(2) - 1)) / sqrt(2)), SRayType, A_new*sqrt(sh_abs*sh_abs + sv_abs*sv_abs/2), t_new); // Ash_new = A * |Psh| / |P|
-			if(s_ray.move(srf, prm))
-				return ERROR_MSG;
-
-		}
+		rays->add_ray(this->type == PRayType ?
+					  // this->type == PRayType
+					  new Ray(r_new, v_new, normalize(cross(v_new, nr)), SRayType, A_new, t_new) :
+					  // this->type == SRayType
+					  new Ray(r_new, v_new, normalize((this->polar + nr * sh_abs*(sqrt(2) - 1)) / sqrt(2)), SRayType,
+							  A_new*sqrt(sh_abs*sh_abs + sv_abs*sv_abs/2), t_new));
+		              // it can be done my creating 2 rays with || and _|_ polarisations, but it's equivalent to a single ray with a rotated polarisation);
 	} else {
-		srf->absorbedS += A_new * A_new;
+		rays->lostS += A_new * A_new;
 	}
 
-	prm->n_alive_rays--;
+	rays->quit_ray();
 	return 0;
 }
 
@@ -329,15 +323,15 @@ pair<double, int> Ray::find_collision(Surface* srf, Params* prm)
 	int i;
 	double t, t_min = prm->Tmax * 2;
 	Triangle *trngl;
-	int i_coll = -1;
+	int i_coll = -1; // indicator of no found collision
 
 	for(i = 0; i < srf->Npol; ++i){ // find collision point
 
-		trngl = &(srf->polygons[i]); // so we don't have to call [i] every time, also it's shorter
+		trngl = &(srf->polygons[i]); // so we don't have to call [i] every time. Also it's shorter
 		t = dot(trngl->r[0] - this->r, trngl->n) / dot(this->v, trngl->n); // find time of collision
 
 		if((SYS_EPS < t) && (t < t_min)){
-		// if the possible collision can happen (t>0) and if it's better than the one we already have (t<t_min)
+		// if the possible collision can happen (t > 0) and if it's better than the one we already have (t < t_min)
 			if(trngl->isInside(this->r + this->v*t, prm->eps)){ // if it's really the point, then save it
 				t_min = t;
 				i_coll = i;
@@ -362,6 +356,36 @@ void Ray::print(ostream &output, string spr)
 }
 
 // --------------------------------------------------------------------------------------------
+// ------------------------------------ RayFront ----------------------------------------------
+// --------------------------------------------------------------------------------------------
+
+void RaysFront::add_ray(Ray *new_ray)
+{
+	this->last_ray->next = new_ray;
+	this->last_ray = this->last_ray->next;
+	this->inc_rays();
+}
+
+void RaysFront::shift_current_ray(void)
+{
+	Ray *old_ray = this->current_ray;
+	this->current_ray = this->current_ray->next;
+	delete old_ray;
+}
+
+void RaysFront::quit_ray(void)
+{
+	--this->n_alive_rays;
+	this->shift_current_ray();
+}
+
+void RaysFront::inc_rays(void)
+{
+	++this->n_alive_rays;
+	++this->n_total_rays;
+}
+
+// --------------------------------------------------------------------------------------------
 // ------------------------------------ Surface -----------------------------------------------
 // --------------------------------------------------------------------------------------------
 
@@ -374,30 +398,31 @@ void Surface::resize_clear(int _n_pol, int _n_mat, int _n_det)
 {
 	if(_n_pol != this->Npol){
 		delete[] this->polygons;
-		this->polygons = (_n_pol == 0 ? NULL : (new Triangle[_n_pol]));
+		this->polygons = (_n_pol == 0 ? nullptr : (new Triangle[_n_pol]));
 		this->Npol = _n_pol;
 	}
 	if(_n_mat != this->Nmat){
 		delete[] this->materials;
-		this->materials = (_n_mat == 0 ? NULL : (new Material[_n_mat]));
+		this->materials = (_n_mat == 0 ? nullptr : (new Material[_n_mat]));
 		this->Nmat = _n_mat;
 	}
 	if(_n_det != this->Ndet){
 		delete[] this->detectors;
-		this->detectors = (_n_det == 0 ? NULL : (new Detector[_n_det]));
+		this->detectors = (_n_det == 0 ? nullptr : (new Detector[_n_det]));
 		this->Ndet = _n_det;
 	}
-	absorbedP = absorbedS = 0;
 }
 
 void Surface::print(ostream &output, string spr1, string spr2)
 {
 	int i;
-	output << spr1 << "Nmat = " << this->Nmat << "\n";
+	output << spr1 << "---------- Materials ----------\n"
+		   << "Nmat = " << this->Nmat << "\n";
 	for(i = 0; i < this->Nmat; ++i){
 		this->materials[i].print(output, toString(i+1) + ") ");
 	}
-	output << "Npol = " << this->Npol << "\n";
+	output << "---------- Polygons ----------\n"
+		   << "Npol = " << this->Npol << "\n";
 	for(i = 0; i < this->Npol; ++i){
 		this->polygons[i].print(output, "\n------------\n" + toString(i+1) + "\n");
 	}
@@ -469,20 +494,26 @@ int Surface::load_from_file(string surf_filename, string mat_filename, Params *p
 
 	// now we know real Xmax & Xmin & dX
 	// so we can allocate memory for frames (and for the grid if necessary)
-	if(prm->dX.x == 0) prm->dX.x = prm->Xmax.x - prm->Xmin.x + 1; // bigger than max delta, so int(delta/dX) == 0 ,
-	if(prm->dX.y == 0) prm->dX.y = prm->Xmax.y - prm->Xmin.y + 1; // so Nslc = 1 in the end
-	if(prm->dX.z == 0) prm->dX.z = prm->Xmax.z - prm->Xmin.z + 1;
+	if(prm->dX.x == 0) prm->dX.x = (prm->Xmax.x - prm->Xmin.x)*1.01; // bigger than max delta, so int(delta/dX) == 0 ,
+	if(prm->dX.y == 0) prm->dX.y = (prm->Xmax.y - prm->Xmin.y)*1.01; // so Nslc = 1 in the end
+	if(prm->dX.z == 0) prm->dX.z = (prm->Xmax.z - prm->Xmin.z)*1.01;
 	prm->Nslc = get_Nslc(prm->Xmax - prm->Xmin, prm->dX) + 1;
 
 	if(prm->draw_mov){
 		this->frames = new Frame[prm->Nfrm + 1];
 		if(prm->prnt_mode == FRAMES_DATA_MODE){
-			int Nnodes = (prm->Nslc.x+1) * (prm->Nslc.y+1) * (prm->Nslc.z+1);
+			int Nnodes = prm->Nslc.x * prm->Nslc.y * prm->Nslc.z;
 			int ind;
 			int3 Xi;
 
 			for(i = 0; i < prm->Nfrm; ++i){
 				this->frames[i].regRays.resize(Nnodes);
+				/*
+				 * now (27.07.2018) sizeof(Ray)==112, so here we need a lot of RAM
+				 * In fact we don't need fields "c","t","next" for registered rays
+				 * so we can create a special class for frame-registered rays which would be ~90 bytes.
+				 * It's not a big difference, so I didn't bother so far, but it can be done at any moment.
+				 */
 				for(Xi.z = 0; Xi.z < prm->Nslc.z; ++Xi.z) for(Xi.y = 0; Xi.y < prm->Nslc.y; ++Xi.y) for(Xi.x = 0; Xi.x < prm->Nslc.x; ++Xi.x){
 					ind = ind3D_to_ind(Xi, prm->Nslc);
 					this->frames[i].regRays[ind].t = i * prm->dt;
@@ -598,7 +629,7 @@ int Surface::load_from_file(string surf_filename, string mat_filename, Params *p
 	 */
 	for(i = 0; i < read_polygons.size(); ++i){ // if some materials are unset, then set them to background material
 		for(i2 = 0; i2 < 2; ++i2){
-			if(read_polygons[i].mat[i2] == NULL){
+			if(!read_polygons[i].mat[i2]){
 				read_polygons[i].mat[i2] = this->materials; // &(material[0])
 			}
 		}
@@ -607,7 +638,7 @@ int Surface::load_from_file(string surf_filename, string mat_filename, Params *p
 			// actually it can't happen here if everything before worked fine.
 			read_polygons.erase(read_polygons.begin()+i);
 
-			error_handl_string = toString(i) + "th polygon has no material set\n";
+			error_handl_string = toString(i) + "-th polygon has no material set\n";
 			delete[] vertex;
 			read_polygons.clear();
 			input.close();
@@ -634,7 +665,7 @@ int Surface::load_from_file(string surf_filename, string mat_filename, Params *p
 				input >> i_vertex[i2];
 				--i_vertex[i2];
 				if(i_vertex[i2] >= Nvertex){
-					error_handl_string = "index of the " + toString(i2) + "th vertex of the " + toString(i) + "th tetrahedron is " + toString(i_vertex[i2]) + "; Nvertex = " + toString(Nvertex) + "\n";
+					error_handl_string = "index of the " + toString(i2) + "-th vertex of the " + toString(i) + "-th tetrahedron is " + toString(i_vertex[i2]) + "; Nvertex = " + toString(Nvertex) + "\n";
 					input.close();
 					return ERROR_MSG;
 				 }
@@ -643,21 +674,21 @@ int Surface::load_from_file(string surf_filename, string mat_filename, Params *p
 			--i_det;
 			// --i is necessary because all arrays are indexed from 0 but all abjects in the file are indexed from 1
 			if(i_det >= this->Ndet){
-				error_handl_string = "index of the detector of the " + toString(i) + "th polygon is " + toString(i_det) + "; Ndet = " + toString(this->Ndet) + "\n";
+				error_handl_string = "index of the detector of the " + toString(i) + "-th polygon is " + toString(i_det) + "; Ndet = " + toString(this->Ndet) + "\n";
 				input.close();
 				return ERROR_MSG;
 			}
 
 			trng = this->findPolygon(i_vertex);
-			if(trng == NULL){
-				error_handl_string = toString(i) + "-th polygon is missing in the final version of the surface\n";
-				input.close();
-				return ERROR_MSG;
-			} else {
+			if(trng){
 				if(i_det >= 0){
 					trng->detector = &(this->detectors[i_det]); // add i2-th polygon to the i_det-th detector
 				}
 				trng->is_absorber = 1; // just an absorbing polygon, not a detector
+			} else {
+				error_handl_string = toString(i) + "-th polygon is missing in the final version of the surface\n";
+				input.close();
+				return ERROR_MSG;
 			}
 		}
 	}
@@ -693,7 +724,7 @@ Triangle* Surface::findPolygon(int* i_vertex) // find triangle by its vertices
 	}
 
 	// i == this->Npol means no existing polygon matches all 3 vertices
-	return i == this->Npol ? NULL :  &(this->polygons[i]);
+	return (i == this->Npol ? nullptr :  &(this->polygons[i]));
 }
 
 int Surface::saveDetectorInfo(string filename, Params *prm)
@@ -910,8 +941,8 @@ void Params::print_full(ostream &output, string spr)
 		   << this->Tmax << spr
 		   << this->Amin << spr
 		   << this->eps << spr
-		   << "model_name: |" << this->model_name << "|" << spr
-		   << "alive_rays: " << this->n_alive_rays << "; total_rays: " << this->n_total_rays << spr;
+		   << "model_name: |" << this->model_name << "|" << spr;
+		   //<< "alive_rays: " << this->n_alive_rays << "; total_rays: " << this->n_total_rays << spr;
 }
 
 void Params::print(ostream &output)
@@ -952,16 +983,16 @@ int Params::save_to_file(string filename)
 // ------------------------------------ Global Fncs -------------------------------------------
 // --------------------------------------------------------------------------------------------
 
-int compute(Surface *srf, Params *prm)
+int compute(Surface *srf, Params *prm, RaysFront *rays)
 {
-	Ray ray;
 	time_t real_start_t;
 	int i;
 
 	double3 *rays_v = new double3[prm->Nrays];
 	// generate rays
 	for(i = 0; i < prm->Nrays; ++i){
-		rays_v[i] = vecByAngles(myRnd(pi/4, 3*pi/4), 0) * srf->materials[1].Cp;
+		rays_v[i] = vecByAngles(myRnd(pi/4, 3*pi/4), 0) * srf->materials[1].Cp; // v || oY
+		//rays_v[i] = vecByAngles(myRnd(pi/4, 3*pi/4), myRnd(-pi/5, pi/5)) * srf->materials[1].Cp; // v || oY
 	}
 	/*
 	for(i = 0; i < prm->Nrays/4; ++i){
@@ -976,18 +1007,25 @@ int compute(Surface *srf, Params *prm)
 
 	time(&real_start_t);
 	for(i = 0; i < prm->Nrays; ++i){
-		ray = Ray(make_double3(0,0,0), rays_v[i], normalize(rays_v[i]), PRayType, 1, 0);
-		// Ray(const double3 _r, const double3 _v, const double3 _polar, const int _type = PRayType, const double _A = 1, const double _t = 0)
-		srf->totalE0 += ray.A * ray.A;
+		rays->current_ray = new Ray(make_double3(0,0,0), rays_v[i], normalize(rays_v[i]), PRayType, 1, 0);
+		// Ray(const double3 _r, const double3 _v, const double3 _polar, const int _type = PRayType, const double _A = 1, const double _t = 0, const Ray *_next = nullptr);
+		rays->inc_rays();
+		rays->last_ray = rays->current_ray;
+		rays->totalE0 += rays->current_ray->A * rays->current_ray->A;
 
-		if(ray.move(srf, prm)){
-			error_handl_string = toString(i) + "-th ray failed\n";
-			delete[] rays_v;
-			return ERROR_MSG;
-		}
+		do{
+			if(rays->current_ray->move(srf, prm, rays)){
+				error_handl_string += ("\n" + toString(i) + "-th ray failed\n");
+				delete[] rays_v;
+				return ERROR_MSG;
+			}
+		}while(rays->current_ray); // while there are rays to compute
 
 		time_progress(real_start_t, time(0), (i+1) / (float(prm->Nrays)), "computing");
 	}
+
+	cout << "lostP/totalE = " << rays->lostP / rays->totalE0 << "                                      \n"
+		 << "lostS/totalE = " << rays->lostS / rays->totalE0 << "                                      \n";
 
 	delete[] rays_v;
 	return 0;
