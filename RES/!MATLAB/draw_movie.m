@@ -33,7 +33,7 @@ function draw_movie(model_name, N0, N1)
         
 %         Amax = draw_frame(frame, get(fig,'CurrentAxes'), Amax, 250, ['t = ' num2str(prm.dt*i)],...
 %                    [prm.Xmin(1) prm.Xmax(1) prm.Xmin(2) prm.Xmax(2) prm.Xmin(3) prm.Xmax(3)], colors);
-        if(frame.Nrays > 1)
+        if(frame.Nrays > 1) % because of matlab
             draw_frame(frame, get(fig,'CurrentAxes'), Amax, qop(prm.prnt_mode == 1, 250, 1), ['t = ' num2str(prm.dt*i)],...
                        [prm.Xmin(1) prm.Xmax(1) prm.Xmin(2) prm.Xmax(2) prm.Xmin(3) prm.Xmax(3)], colors);                   
             writeVideo(aviobj,getframe(fig));                   
