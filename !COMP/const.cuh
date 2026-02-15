@@ -3,12 +3,14 @@
 #include <math.h>
 #include <cmath>
 #include <vector>
-#include <thrust/host_vector.h>
-#include <thrust/device_vector.h>
 #include <omp.h>
 #include <algorithm>
 #include <random>
 #include <numeric>
+
+#include <thrust/host_vector.h>
+#include <thrust/device_vector.h>
+#include <thrust/reduce.h>
 
 #include <iostream>
 #include <stdlib.h>
@@ -28,6 +30,8 @@
 #include <math_helper.h>
 
 using namespace std;
+
+#define BlockW 512
 
 // --------------------------- math ----------------------------------
 

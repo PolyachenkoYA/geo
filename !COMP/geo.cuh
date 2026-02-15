@@ -58,8 +58,8 @@ public:
 	{}
 	bool isEq(const Material* m2, const double _eps = SYS_EPS) const;
 
-	string toStr(string spr1 = "", string spr2 = "");
-	void print(ostream &output, string spr1 = "", string spr2 = "\n");
+	string toStr(const string spr1 = "", const string spr2 = "") const;
+	void print(ostream &output, const string spr1 = "", const string spr2 = "\n") const ;
 };
 
 class Triangle{
@@ -83,8 +83,8 @@ public:
 
     void clear_params();
     double3 getNorm(void) const;
-    int sg(const double3 rx, const double _eps = SYS_EPS) const;
-    int isInside(const double3 rx, const double _eps) const;
+    __host__ __device__ int sg(const double3 rx, const double _eps = SYS_EPS) const;
+    __host__ __device__ int isInside(const double3 rx, const double _eps) const;
 
     string ToStr(string spr1="\n------\n", string spr2="\n------\n");
     void print(ostream &output, string spr1="\n------\n", string spr2="\n------\n");
@@ -111,7 +111,7 @@ public:
     void print(ostream &output, string spr = "\n-----\n");
     string ToStr(const string spr = "\n-----\n");
     int move(Surface* srf, Params *prm, RaysFront *rays);
-    pair<double, int> find_collision(Surface* srf, Params* prm);
+    int find_collision(Surface* srf, Params* prm, double *t_min, int *i_coll);
     RegisteredRay toRegRay(void);
     void add(Ray *ray2);
 };
@@ -141,7 +141,7 @@ public:
     Triangle* findPolygon(int* i_vertex);
 
     int saveDetectorInfo(string filename, Params *prm);
-    int saveMovie(Params *prm);
+    int saveMovie(string path, Params *prm);
     void print(ostream &output, string spr1="\n------------------------------\n", string spr2="\n------------------------------\n");
 };
 
@@ -156,18 +156,21 @@ public:
 	double3 Xmax, Xmin, dX;
 	int3 Nslc;
 
-	string model_name, tet_filename, prm_filename, material_filename, res_filename;
+	string model_name, tet_filename, prm_filename, material_filename, res_filename, frames_subpath;
+	string tet_ext, prm_ext, material_ext, results_ext, log_ext;
 
 	vector<string> paramFHead;
 
 	Params(void):
-		eps(SYS_EPS), Tmax(0), dt(0), Amin(0), f(0), tau(0), Nrays(0), model_name("sys_tst")
+		eps(SYS_EPS), Tmax(0), dt(0), Amin(0), f(0), tau(0), Nrays(0), model_name("sys_tst"), frames_subpath("frames"),
+		tet_ext("tet"), prm_ext("prm"), material_ext("mat"), results_ext("res"), log_ext("log")
 	{
 		this->paramFHead = {"Nrays","Tmax","dt","Amin","f","tau","eps","use_det","draw_mov","prnt_frames/raw",
 				            "Xmin.x","Xmin.y","Xmin.z","Xmax.x","Xmax.y","Xmax.z","dX.x","dX.y","dX.z"};
 	}
 	~Params(void){}
 
+	void apply_modelname(string new_modelname);
 	int load_from_file(string filename);
 	void print(ostream &output);
 	void print_full(ostream &output, string spr);

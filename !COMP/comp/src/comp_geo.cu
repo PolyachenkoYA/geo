@@ -19,12 +19,7 @@ int main(int argc, char **argv)
 		time_t now = time(0);
 		string sessionID = string(ctime(&now));
 		Params prm;
-		prm.model_name = string(argv[1]);
-		prm.prm_filename = prm.model_name + ".prm";
-		prm.tet_filename = prm.model_name + ".tet";
-		prm.material_filename = prm.model_name + ".mat";
-		prm.res_filename = prm.model_name + ".res";
-		global_logFname = prm.model_name + ".log";
+		prm.apply_modelname(string(argv[1]));
 		SAY_LOG("session " + sessionID + "\n");
 		// -------------------------------------------
 		// ------------ read parameters --------------
@@ -46,19 +41,20 @@ int main(int argc, char **argv)
 		// --------------------------------------------
 		// ------------ save results ------------------
 		// --------------------------------------------
-		string path = "./" + prm.model_name + "/frames/";
-	    mkdir(prm.model_name.c_str(),S_IRWXU | S_IRWXG);
-	    mkdir(path.c_str(),S_IRWXU | S_IRWXG);
+		string frames_path = "./" + prm.model_name + "/" + prm.frames_subpath + "/";
+	    mkdir(prm.model_name.c_str(),S_IRWXU | S_IRWXG); // whole job folder
+	    mkdir(frames_path.c_str(),S_IRWXU | S_IRWXG);    // frames folder
 
 		if(CHECK(prm.save_to_file("./" + prm.model_name + "/" + prm.prm_filename))) return 1;
 		if(prm.use_det){
 			if(CHECK(srf.saveDetectorInfo(prm.res_filename, &prm))) return 1;
 		}
 		if(prm.draw_mov){
-			if(CHECK(srf.saveMovie(&prm))) return 1;
+			if(CHECK(srf.saveMovie(frames_path, &prm))) return 1;
 		}
 	} else {
 		cout << "Usage:\n./comp_geo      model_name\n";
+		print_sys_info(cout);
 	}
 
 	return 0;

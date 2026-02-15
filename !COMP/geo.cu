@@ -20,12 +20,12 @@ bool Material::isEq(const Material* m2, const double _eps) const
 	return m2 ? (almostEq(this->Cp, m2->Cp, _eps) && almostEq(this->Cs, m2->Cs, _eps)) : 0;
 }
 
-string Material::toStr(string spr1, string spr2)
+string Material::toStr(const string spr1, const string spr2) const
 {
 	return spr1 + "Cp = " + toString(this->Cp) + "; Cs = " + toString(this->Cs) + spr2;
 }
 
-void Material::print(ostream &output, string spr1, string spr2)
+void Material::print(ostream &output, const string spr1, const string spr2) const
 {
 	output << this->toStr(spr1, spr2);
 }
@@ -91,12 +91,12 @@ double3 Triangle::getNorm(void) const
     return normalize(cross(this->r[1] - this->r[0], this->r[2] - this->r[0]));
 }
 
-int Triangle::sg(const double3 rx, const double _eps) const
+__host__ __device__ int Triangle::sg(const double3 rx, const double _eps) const
 {
     return sgn(dot(rx, this->n), _eps);
 }
 
-int Triangle::isInside(const double3 rx, const double _eps) const
+__host__ __device__ int Triangle::isInside(const double3 rx, const double _eps) const
 {
     int sg0 = this->sg(cross(this->r[1] - rx, this->r[1] - this->r[0]), _eps);
     return sg0 == 0 ? 0 : ((sg0 == this->sg(cross(this->r[2] - rx, this->r[2] - this->r[1]), _eps)) &&
@@ -171,19 +171,20 @@ int Ray::move(Surface* srf, Params *prm, RaysFront *rays)
 	int i;
 
 	// --------------------- pre-geom - find collision point -------------------------
-	double3 n, rx;
-	pair<double, int> coll_res = this->find_collision(srf, prm);
-	// pair<double, int> Ray::find_collision(Surface* srf, Params* prm)
-	double dlt_t = coll_res.first;
-	int i_coll = coll_res.second;
 	Triangle *trng;
+	double3 n, rx;
+	double dlt_t;
+	int i_coll;
+	this->find_collision(srf, prm, &dlt_t, &i_coll);
+	// int Ray::find_collision(Surface* srf, Params* prm, double *t_min, int *i_coll)
 
 	if(i_coll == -1){ // no collision found, so the ray just runs away from the surface
 		rays->quit_ray();
 		return 0;
 	} else {
 		trng = &(srf->polygons[i_coll]); // collision surface found
-		double3 dlt_r = this->v*dlt_t;
+		// trng =  srf->polygons + i_coll
+		double3 dlt_r = this->v * dlt_t;
 
 		if(prm->draw_mov){ // draw frames
 			double t_new = this->t + dlt_t;
@@ -234,7 +235,7 @@ int Ray::move(Surface* srf, Params *prm, RaysFront *rays)
 		if(prm->use_det){
 			if(trng->detector){ // found triangle is a part of a detector
 				trng->detector->regRays.push_back(RegisteredRay(this));
-			} // TODO frames - building registered curve on the fly
+			} // TODO building registered curve on the fly
 			if(trng->is_absorber){
 				rays->quit_ray();
 				return 0;
@@ -317,29 +318,95 @@ int Ray::move(Surface* srf, Params *prm, RaysFront *rays)
 	rays->quit_ray();
 	return 0;
 }
+/*
+__device__ int cuda_sg(double3 n, double3 rx, double _eps)
+{
+    return sgn(dot(rx, n), _eps);
+}
 
-pair<double, int> Ray::find_collision(Surface* srf, Params* prm)
+__device__ int cuda_isInside(Triangle *trg, double3 rx, double _eps)
+{
+    int sg0 = cuda_sg(trg->n, cross(trg->r[1] - rx, trg->r[1] - trg->r[0]), _eps);
+    return sg0 == 0 ? 0 : ((sg0 == cuda_sg(trg->n, cross(trg->r[2] - rx, trg->r[2] - trg->r[1]), _eps)) &&
+    		              (sg0 == cuda_sg(trg->n, cross(trg->r[0] - rx, trg->r[0] - trg->r[2]), _eps)));
+}
+*/
+__global__ void cuda_find_collision(double3 this_r, double3 this_v, int Npol, Triangle *dev_polygons, double Tmax, double _eps, double *dev_t_min, int *dev_i_coll)
+{
+	__shared__ double w[BlockW], found_i_coll[BlockW];
+	int ti = threadIdx.x;
+	int g_i = BlockW * blockIdx.x + ti; // global index
+	//int g_i = blockDim.x * blockIdx.x + threadIdx.x; // global index
+
+	if(g_i >= Npol) return;
+
+	Triangle trg = dev_polygons[g_i];
+	double t = dot(trg.r[0] - this_r, trg.n) / dot(this_v, trg.n);
+
+	// build pairs W-IND, to find IND with the least W. W is for weight
+	if((t <= _eps) ||  (Tmax <= t)){
+		w[ti] = Tmax;
+		found_i_coll[ti] = -1;
+	} else {
+		//found_i_coll[ti] = cuda_isInside(&trg, this_r + this_v*t, _eps);
+		found_i_coll[ti] = trg.isInside(this_r + this_v*t, _eps);
+		w[ti] = found_i_coll[ti] ? t : Tmax;
+	}
+
+	int i = BlockW / 2;
+	int ti_shft;
+	//double tmp;
+
+	while(i > 0) // pre-find min w
+	{
+		if(ti < i)
+		{
+			ti_shft = ti + i;
+			// private double tmp; can be used here to optimize (probably)
+			// tmp = w[ti_shft];
+			if(w[ti_shft] < w[ti]){
+				w[ti] = w[ti_shft];
+				found_i_coll[ti] = found_i_coll[ti_shft];
+			}
+		}
+		__syncthreads();
+
+		i >>= 1; // i /= 2;
+		/*
+		*	For correct work Ntot%BlockW must be ==0, because if it's not, then
+		*	/=2 won't properly wrap indices
+		*/
+	}
+
+	if(ti == 0){ // save found pairs to finish search on the host
+		dev_t_min[blockIdx.x] = w[0];
+		dev_i_coll[blockIdx.x] = found_i_coll[0];
+	}
+}
+
+int Ray::find_collision(Surface* srf, Params* prm, double *t_min, int *i_coll)
 {
 	int i;
-	double t, t_min = prm->Tmax * 2;
+	double t;
 	Triangle *trngl;
-	int i_coll = -1; // indicator of no found collision
+	*t_min = prm->Tmax * 2;
+	*i_coll = -1; // indicator of no found collision
 
 	for(i = 0; i < srf->Npol; ++i){ // find collision point
 
 		trngl = &(srf->polygons[i]); // so we don't have to call [i] every time. Also it's shorter
 		t = dot(trngl->r[0] - this->r, trngl->n) / dot(this->v, trngl->n); // find time of collision
 
-		if((SYS_EPS < t) && (t < t_min)){
+		if((prm->eps < t) && (t < *t_min)){
 		// if the possible collision can happen (t > 0) and if it's better than the one we already have (t < t_min)
 			if(trngl->isInside(this->r + this->v*t, prm->eps)){ // if it's really the point, then save it
-				t_min = t;
-				i_coll = i;
+				*t_min = t;
+				*i_coll = i;
 			}
 		}
 	}
 
-	return make_pair(t_min, i_coll);
+	return 0;
 }
 
 string Ray::ToStr(const string spr)
@@ -750,9 +817,9 @@ int Surface::saveDetectorInfo(string filename, Params *prm)
 	return 0;
 }
 
-int Surface::saveMovie(Params *prm)
+int Surface::saveMovie(string path, Params *prm)
 {
-	string path = "./" + prm->model_name + "/frames/";
+	//string path = "./" + prm->model_name + "/" + prm->frames_subpath + "/";
     int i;
 	ofstream output;
 	string filename;
@@ -977,6 +1044,16 @@ int Params::save_to_file(string filename)
 
 	output.close();
 	return 0;
+}
+
+void Params::apply_modelname(string new_modelname)
+{
+	this->model_name = new_modelname;
+	this->prm_filename = this->model_name + "." + this->tet_ext;
+	this->tet_filename = this->model_name + "." + this->prm_ext;
+	this->material_filename = this->model_name + "." + this->material_ext;
+	this->res_filename = this->model_name + "." + this->results_ext;
+	global_logFname = this->model_name + "." + this->log_ext;
 }
 
 // --------------------------------------------------------------------------------------------

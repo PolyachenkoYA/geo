@@ -1,0 +1,1 @@
+rsync -av --exclude='RES/DATA/*' --exclude='docs/*' --exclude='SAVE/*' --exclude='gmsh-3.0.6-Linux64/*' ./* ~/WinMyUser/SAVES/geo/$1
